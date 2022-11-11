@@ -1080,9 +1080,21 @@ static ssize_t clx_driver_clx8000_get_eth_low_power_mode_status(void *xcvr, unsi
     uint32_t data = 0, val = 0;
     struct clounix_priv_data *sfp = &(((struct xcvr_driver_clx8000 *)xcvr)->dev);
 
+    if(eth_index < 30) {
+    data = fpga_reg_read(sfp, QSFP_CPLD0_LPW__CONFIG_ADDRESS);
+    //pega_print(DEBUG, "reg: %x, data: %x\r\n", QSFP_CONFIG_ADDRESS_BASE, data);
+    GET_BIT(data, (eth_index - QSFP_CPLD0_LPW_START_PORT + QSFP_CPLD0_LPW__CONFIG_OFFSET), val);
+    }
+    else if(eth_index <= 47){
+    data = fpga_reg_read(sfp, QSFP_CPLD1_LPW__CONFIG_ADDRESS);
+    //pega_print(DEBUG, "reg: %x, data: %x\r\n", QSFP_CONFIG_ADDRESS_BASE, data);
+    GET_BIT(data, (eth_index - QSFP_CPLD1_LPW_START_PORT + QSFP_CPLD1_LPW__CONFIG_OFFSET), val);
+    }
+    else {
     data = fpga_reg_read(sfp, QSFP_CONFIG_ADDRESS_BASE);
     //pega_print(DEBUG, "reg: %x, data: %x\r\n", QSFP_CONFIG_ADDRESS_BASE, data);
     GET_BIT(data, (eth_index - QSFP_START_PORT + QSFP_CONFIG_POWER_MODE_OFFSET), val);
+    }
     return sprintf(buf, "0x%02x\n", !val);
 }
 

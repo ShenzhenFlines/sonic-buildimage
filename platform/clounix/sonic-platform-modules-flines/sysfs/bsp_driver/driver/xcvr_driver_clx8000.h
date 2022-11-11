@@ -134,6 +134,13 @@ inline static int fpga_reg_read(struct clounix_priv_data *priv, int reg)
 #define QSFP_STATUS_IRQ_OFFSET           8
 #define QSFP_STATUS_POWER_FAULT_OFFSET   16 
 #define QSFP_START_PORT                  48
+#define QSFP_CPLD0_LPW__CONFIG_ADDRESS         (CPLD_BASE_ADDRESS + 0x14)
+#define QSFP_CPLD0_LPW__CONFIG_OFFSET    0
+#define QSFP_CPLD0_LPW_START_PORT        0
+#define QSFP_CPLD1_LPW__CONFIG_ADDRESS         (CPLD_BASE_ADDRESS + 0x24)
+#define QSFP_CPLD1_LPW__CONFIG_OFFSET    0
+#define QSFP_CPLD1_LPW_START_PORT        30
+
 
 #define FPGA_PORT_BASE      (0x1000) 
 #define FPGA_PORT_MGR0_CFG  (FPGA_PORT_BASE + 0x00)
