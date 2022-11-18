@@ -64,8 +64,8 @@ class Sfp(SfpBase):
     def __init__(self, index):
         self.__index = index
 
-        self.__platform = "x86_64-clounix_clx8000-48c8d-r0"
-        self.__hwsku    = "clx8000-48c8d"
+        self.__platform = "x86_64-flines_ds610-48c8d-r0"  
+        self.__hwsku    = "ds610-48c8d"
 
         for x in range(self.port_start, self.port_end + 1):
             if x < self.cpldb_sfp_num:

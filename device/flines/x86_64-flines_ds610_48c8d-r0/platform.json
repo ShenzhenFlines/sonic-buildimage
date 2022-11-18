@@ -45,6 +45,9 @@
                     },
                     {
                         "name": "FAN5"
+                    },
+                    {
+                        "name": "FAN6"
                     }
                 ]
             }
@@ -145,11 +148,7 @@
                 "position": "fpga i2c temp"
             },
             {
-                "name": "LM75BD / FAN 0x48",
-                "position": "LM75BD"
-            },
-            {
-                "name": "LM75BD / FAN 0x49",
+                "name": "LM75BD / FAN 0x4b",
                 "position": "LM75BD"
             }
         ],

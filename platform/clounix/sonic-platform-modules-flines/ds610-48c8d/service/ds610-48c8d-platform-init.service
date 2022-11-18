@@ -1,5 +1,5 @@
 [Unit]
-Description=Clounix clx8000-48c8d Platform initialization service
+Description=flines ds610-48c8d Platform initialization service
 Before=network.target determine-reboot-cause.service pmon.service
 DefaultDependencies=no
 

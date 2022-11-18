@@ -11,7 +11,7 @@ HOST_CHK_STR = "/docker"
 HOST_CHK_FILE = "/proc/1/cgroup"
 EMPTY_STRING = ""
 
-HOST_PLATFORM_JSON = '/usr/share/sonic/device/x86_64-clounix_clx8000_48c8d-r0/platform.json'
+HOST_PLATFORM_JSON = '/usr/share/sonic/device/x86_64-flines_ds610_48c8d-r0/platform.json'
 PMON_PLATFORM_JSON = '/usr/share/sonic/platform/platform.json'
 
 class APIHelper():

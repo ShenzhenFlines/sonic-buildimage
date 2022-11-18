@@ -327,8 +327,8 @@ class QSfp_CMIS(SfpBase):
 
         self.__attr_path_prefix = '/sys/switch/transceiver/eth{}/'.format(self.__index+1)
 
-        self.__platform = "x86_64-clounix_clx8000-48c8d-r0"
-        self.__hwsku    = "clx8000-48c8d"
+        self.__platform = "x86_64-flines_ds610-48c8d-r0"
+        self.__hwsku    = "ds610-48c8d"
 
         self.__presence_attr = None
         self.__eeprom_path = None
