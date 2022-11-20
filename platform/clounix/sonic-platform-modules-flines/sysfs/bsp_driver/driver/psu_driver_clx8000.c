@@ -53,8 +53,8 @@ static struct device *client_priv_arry[MAX_PSU_DATA_NUM+1] = {0};
 struct psu_driver_clx8000 driver_psu_clx8000;
 
 static unsigned char psu_map[][2] = {
-    {0x58, 1},
-    {0x5a, 2},
+    {0x5a, 1},
+    {0x58, 2},
     {0, 0},
 };
 
