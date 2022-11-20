@@ -22,17 +22,17 @@ struct syseeprom_driver_clx8000 driver_syseeprom_clx8000;
 
 static ssize_t clx_driver_clx8000_write_syseeprom(struct syseeprom_driver_clx8000 *driver, char *buf, loff_t offset, size_t count)
 {
-    char *dummy = buf;    
+    //char *dummy = buf;    
     //select IDROM channel
-    clx_i2c_mux_write(driver->bus, driver->mux_addr, driver->mux_channel, dummy, 1);
+    //clx_i2c_mux_write(driver->bus, driver->mux_addr, driver->mux_channel, dummy, 1);
     return clx_i2c_write(driver->bus, driver->addr, offset, buf, count);
 }
 
 static ssize_t clx_driver_clx8000_read_syseeprom(struct syseeprom_driver_clx8000 *driver, char *buf, loff_t offset, size_t count)
 {
-    char *dummy = buf;
+    //char *dummy = buf;
     //select IDROM channel
-    clx_i2c_mux_write(driver->bus, driver->mux_addr, driver->mux_channel, dummy, 1);
+    //clx_i2c_mux_write(driver->bus, driver->mux_addr, driver->mux_channel, dummy, 1);
     return clx_i2c_read(driver->bus, driver->addr, offset, buf, count);  
 }
 /*****************************************syseeprom*******************************************/
