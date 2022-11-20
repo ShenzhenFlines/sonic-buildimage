@@ -12,10 +12,10 @@
 
 //internal function declaration
 
-#define MAX_SENSOR_NUM (5)
+#define MAX_SENSOR_NUM (4)
 
 #define MAX_CPU_DIE_NUM (1)
-#define SENSOR_NUM_PER_DIE (9)
+#define SENSOR_NUM_PER_DIE (5)
 #define CPU_SENSOR_BASE (1)
 
 #define TEMP_NODE "temp1"
@@ -33,15 +33,15 @@ struct sensor_descript sensor_map_index[] = {
     {"cpu 1", 0, "cpu 1"},
     {"cpu 2", 0, "cpu 2"},
     {"cpu 3", 0, "cpu 3"},
-    {"cpu 4", 0, "cpu 4"},
+   /* {"cpu 4", 0, "cpu 4"},
     {"cpu 5", 0, "cpu 5"},
     {"cpu 6", 0, "cpu 6"},
-    {"cpu 7", 0, "cpu 7"},
+    {"cpu 7", 0, "cpu 7"},*/
     {"fpga-tmp", 0x48, "BOARD 0x48"},
     {"fpga-psu0", 0x49, "BOARD 0x49"},
     {"fpga-psu1", 0x4a, "BOARD 0x4a"},
     {"fpga-fan", 0x4b, "FAN 0x4b"},
-    {NULL, 0, 0},
+   /* {NULL, 0, 0},*/
 };
 
 struct temp_driver_clx8000 driver_temp_clx8000;
@@ -63,7 +63,7 @@ void hwmon_cpu_sensor_del(struct device *dev)
     write_lock(&list_lock);
     sensor_arry[0] = NULL;
     write_unlock(&list_lock);
-
+   
     return;
 }
 EXPORT_SYMBOL(hwmon_cpu_sensor_del);

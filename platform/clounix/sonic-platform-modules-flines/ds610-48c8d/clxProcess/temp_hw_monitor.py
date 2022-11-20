@@ -5,6 +5,7 @@ import os
 import time
 import socket
 import threading
+import contextlib
 
 reboot = "/usr/local/bin/reboot"
 sensor_path = "/sys/switch/sensor/"
@@ -22,7 +23,8 @@ PORT=58888
 ADDITIONAL_FAULT_CAUSE_FILE = "/host/reboot-cause/platform/additional_fault_cause"
 ADM1166_CAUSE_MSG = "User issued 'adm1166_fault' command [User:{}, Time: {}]"
 REBOOT_CAUSE_MSG = "User issued 'temp_ol' command [User: {}, Time: {}]"
-THERMAL_OVERLOAD_POSITION_FILE = "/host/reboot-cause/platform/thermal_overload_position"
+
+THERMAL_OVERLOAD_POSITION_FILE = "/host/reboot-cause/temp-reboot-cause.txt"
 
 ADM1166_1_FAULT_HISTORY_FILE = "/host/reboot-cause/platform/adm1166_1_fault_position"
 ADM1166_2_FAULT_HISTORY_FILE = "/host/reboot-cause/platform/adm1166_2_fault_position"
@@ -86,6 +88,7 @@ def serv_process(sock):
             os._exit(0)
 
 def cause_reboot(pos):
+
     fd = os.popen("cat " + sensor_path + dir_name.format(pos) + "temp_type")
     where = fd.read()
     where = where.strip('\x0a')
@@ -95,27 +98,38 @@ def cause_reboot(pos):
     time = time.strip('\x0a')
 
     msg = REBOOT_CAUSE_MSG.format(where, time)
-    os.system("echo \"" + msg + "\" > " + THERMAL_OVERLOAD_POSITION_FILE)
+
+    if not os.path.exists(THERMAL_OVERLOAD_POSITION_FILE):
+        os.system(r"touch {}".format(THERMAL_OVERLOAD_POSITION_FILE))
+    
+    with open(THERMAL_OVERLOAD_POSITION_FILE, 'a') as f:
+        f.writelines(msg)
+        f.write('\n')
+
     os.system(reboot)
     os._exit(1)
 
 def main():
+
     ops = common.sys.argv[1]
 
     host = socket.gethostname()
     ip = socket.gethostbyname(host)
 
+    if not os.path.exists(THERMAL_OVERLOAD_POSITION_FILE):
+        os.system(r"touch {}".format(THERMAL_OVERLOAD_POSITION_FILE))
+
     if ops == 'uninstall':
         try:
             sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        except socket.error as mag:
+        except socket.error as msg:
             print(msg)
             os._exit(1)
 
         sock.sendto(str("exit").encode(), (ip, PORT))
         sock.close()
         os._exit(0)
-
+    """
     while 1:
         if os.path.exists(ADM1166_1_FAULT_POSITION):
             break
@@ -125,10 +139,17 @@ def main():
             break
 
     process_adm1166_fault()
-
+    """
+    
     while 1:
+
         if os.path.exists(sensor_path + num_node):
-            break
+
+            if os.path.exists("/sys/switch/sensor/temp0/temp_input"):
+
+                time.sleep(2)
+
+                break
     
     try:
         sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
@@ -140,31 +161,57 @@ def main():
 
     t = threading.Thread(target=serv_process, args=(sock,))
     t.start()
+    
 
     fd = os.popen("cat " + sensor_path + num_node)
     total_num = fd.read()
     total_num = int(total_num)
 
     while 1:
+        
+        max_curr = 0
+
         for pos in range(total_num):
+
             fd = os.popen("cat " + sensor_path + dir_name.format(pos) + check_list['out_put'])
             curr = fd.read()
+            if (curr == "NA\n"):curr = 0
             curr = int(curr)
-        
+            """
+            with open(THERMAL_OVERLOAD_POSITION_FILE, "a") as o:
+                with contextlib.redirect_stdout(o):
+                    print('curr temp: %d.' % curr)
+            """
             fd = os.popen("cat " + sensor_path + dir_name.format(pos) + check_list['warn'])
             warn =  fd.read()
+            if (warn == "NA\n"):warn = 0
             warn = int(warn)
         
             fd = os.popen("cat " + sensor_path + dir_name.format(pos) + check_list['danger'])
             danger =  fd.read()
+            if (danger == "NA\n"):danger = 0
             danger = int(danger)
 
-            if (danger <= warn):
-                if (curr >= (warn + 5*TEMP_UNIT)):
-                    cause_reboot(pos)
-            elif (curr >= ((danger+warn)/2)):
+            if (max_curr < curr):
+
+                max_curr = curr
+
+            if (max_curr > 75000):
+
                 cause_reboot(pos)
 
+        if (max_curr > 65000):
+
+            os.system("echo " + "100" + " > " + "/sys/switch/fan/fan1/motor0/ratio")
+
+        elif(max_curr < 55000):
+
+            os.system("echo " + "60" + " > " + "/sys/switch/fan/fan1/motor0/ratio")
+        """
+        with open(THERMAL_OVERLOAD_POSITION_FILE, "a") as o:
+            with contextlib.redirect_stdout(o):
+                print('max_curr temp: %d.' % max_curr)
+        """
         time.sleep(10)
 
 if __name__ == "__main__" :
