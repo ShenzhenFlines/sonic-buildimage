@@ -149,45 +149,51 @@ ssize_t adm1166_fault_log_addr_show(struct device *dev, struct device_attribute 
 
 static void process_elec_data(unsigned long long *data, unsigned char index, unsigned short addr)
 {
-    /* frist translate the voltage unit to uV */
-    *data = ((*data * ref_voltage_mV * 1000)/((1 << adc_bits) - 1));
+    *data = ((*data * ref_voltage_mV)/((1 << adc_bits) - 1));
 
-    /* The voltage divider factor is amplified by a factor of 1000 */
+    
     switch (index) {
         case 0xa0:
             if (addr == 0x34) {
-                *data /= 4363;
+                *data = (*data*4363)/1000;
             } else {
-                *data /= 2181;
+                *data = (*data*2181)/1000;
             }
             break;
 
         case 0xa2:
             if (addr == 0x34) {
-                *data /= 4363;
+                *data = (*data*4363)/1000;
             } else {
-                *data /= 1000;
+                *data = (*data);
             }
             break;
 
         case 0xa4:
-        case 0xa6:
             if (addr == 0x34) {
-                *data /= 1000;
+                *data = (*data);
             } else {
-                *data /= 4363;
+                *data = (*data*4363)/1000;
             }
             break;
 
+        case 0xa6:
+            if (addr == 0x34) {
+                *data = (*data*10472)/1000;
+            } else {
+                *data = (*data*4363)/1000;
+            }
+
+            break;
+
         case 0xa8:
-            *data /= 10472;
+            *data = (*data*10472)/1000;
             break;
 
         default:
-            *data /= 1000;
+            *data = (*data);
             break;
     }
-
     /* cacl over return value's unit is mV */
     return;
 }
