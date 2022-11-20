@@ -8,17 +8,17 @@
             {
                 "name": "CPLD-1",
                 "description":"MB CPLD#1",
-                "firmware_version_path":"/sys//switch/cpld/cpld1/hw_version"
+                "firmware_version_path":"/sys/switch/cpld/cpld1/hw_version"
             },
             {
                 "name": "CPLD-2",
                 "description":"MB CPLD#2",
-                "firmware_version_path":"/sys//switch/cpld/cpld2/hw_version"
+                "firmware_version_path":"/sys/switch/cpld/cpld2/hw_version"
             },
             {
                 "name": "FPGA",
                 "description":"FPGA",
-                "firmware_version_path":"/sys//switch/fpga/fpga1/hw_version"
+                "firmware_version_path":"/sys/switch/fpga/fpga1/hw_version"
             },
             {
                 "name": "BIOS",
@@ -102,7 +102,7 @@
             {
                 "name": "CPU / Package",
                 "position": "CPU"
-            },
+            },            
             {
                 "name": "CPU / Core 0",
                 "position": "CPU"
@@ -117,22 +117,6 @@
             },
             {
                 "name": "CPU / Core 3",
-                "position": "CPU"
-            },
-            {
-                "name": "CPU / Core 4",
-                "position": "CPU"
-            },
-            {
-                "name": "CPU / Core 5",
-                "position": "CPU"
-            },
-            {
-                "name": "CPU / Core 6",
-                "position": "CPU"
-            },
-            {
-                "name": "CPU / Core 7",
                 "position": "CPU"
             },
             {
