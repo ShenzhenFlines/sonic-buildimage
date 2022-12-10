@@ -185,7 +185,7 @@ class Fan(FanBase):
         if (attr_rv != None):
             attr_rv = int(attr_rv) 
             if (attr_rv >= 0):
-                speed = (attr_rv*274+180)
+                speed = (attr_rv*210)
        
         return speed
 
