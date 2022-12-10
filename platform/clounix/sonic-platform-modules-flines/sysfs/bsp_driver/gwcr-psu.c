@@ -62,9 +62,9 @@ ssize_t mfr_info_show(struct device *dev, struct device_attribute *attr, char *b
 }
 
 #define psu_stat_offset (0x608)
-#define psu_1_addr (0x58)
-#define psu_2_addr (0x5a)
-#define i2c_psu_master_offset (0x200000)
+#define psu_1_addr (0x5a)
+#define psu_2_addr (0x58)
+#define i2c_psu_master_offset (0x000000)
 #define pwok (1<<1)
 #define acok (1<<2)
 
@@ -136,21 +136,23 @@ ssize_t led_status_show(struct device *dev, struct device_attribute *attr, char 
     return sprintf(buf, "%s\n", led_status_list[led_status]);
 }
 
-FPGA_DEVICE_ATTR(psu_1_acok, S_IRUSR, psu_stat_show, NULL, 2);
-FPGA_DEVICE_ATTR(psu_1_pwok, S_IRUSR, psu_stat_show, NULL, 1);
-FPGA_DEVICE_ATTR(psu_1_prst, S_IRUSR, psu_stat_show, NULL, 0);
+FPGA_DEVICE_ATTR(psu_1_acok, S_IRUSR, psu_stat_show, NULL, 6);
+FPGA_DEVICE_ATTR(psu_1_pwok, S_IRUSR, psu_stat_show, NULL, 5);
+FPGA_DEVICE_ATTR(psu_1_prst, S_IRUSR, psu_stat_show, NULL, 4);
 
-FPGA_DEVICE_ATTR(psu_2_acok, S_IRUSR, psu_stat_show, NULL, 6);
-FPGA_DEVICE_ATTR(psu_2_pwok, S_IRUSR, psu_stat_show, NULL, 5);
-FPGA_DEVICE_ATTR(psu_2_prst, S_IRUSR, psu_stat_show, NULL, 4);
+FPGA_DEVICE_ATTR(psu_2_acok, S_IRUSR, psu_stat_show, NULL, 2);
+FPGA_DEVICE_ATTR(psu_2_pwok, S_IRUSR, psu_stat_show, NULL, 1);
+FPGA_DEVICE_ATTR(psu_2_prst, S_IRUSR, psu_stat_show, NULL, 0);
 
 SENSOR_DEVICE_ATTR(led_status, S_IRUGO, led_status_show, NULL, 0);
 SENSOR_DEVICE_ATTR(mfr_id, S_IRUGO, mfr_info_show, NULL, PMBUS_MFR_ID);
 SENSOR_DEVICE_ATTR(mfr_model, S_IRUGO, mfr_info_show, NULL, PMBUS_MFR_MODEL);
 SENSOR_DEVICE_ATTR(mfr_revision, S_IRUGO, mfr_info_show, NULL, PMBUS_MFR_REVISION);
-SENSOR_DEVICE_ATTR(mfr_location, S_IRUGO, mfr_info_show, NULL, PMBUS_MFR_LOCATION);
+/*SENSOR_DEVICE_ATTR(mfr_location, S_IRUGO, mfr_info_show, NULL, PMBUS_MFR_LOCATION);*/
+SENSOR_DEVICE_ATTR(mfr_location, S_IRUGO, mfr_info_show, NULL, PMBUS_MFR_FWID);
 SENSOR_DEVICE_ATTR(mfr_date, S_IRUGO, mfr_info_show, NULL, PMBUS_MFR_DATE);
-SENSOR_DEVICE_ATTR(mfr_serial, S_IRUGO, mfr_info_show, NULL, PMBUS_MFR_SERIAL);
+/*SENSOR_DEVICE_ATTR(mfr_serial, S_IRUGO, mfr_info_show, NULL, PMBUS_MFR_SERIAL);*/
+SENSOR_DEVICE_ATTR(mfr_serial, S_IRUGO, mfr_info_show, NULL, PMBUS_MFR_FWVERSION);
 
 static struct attribute *gwcr_psu_attrs[] = {
     &fpga_dev_attr_psu_1_acok.dev_attr.attr,
