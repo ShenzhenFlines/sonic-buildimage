@@ -5,9 +5,9 @@ DefaultDependencies=no
 
 [Service]
 Type=simple
-ExecStart=/usr/local/bin/clxProcess/main.py install
+ExecStart=/usr/local/bin/dsProcess/main.py install
 ExecStop=/usr/sbin/service pmon stop
-ExecStop=/usr/local/bin/clxProcess/main.py uninstall
+ExecStop=/usr/local/bin/dsProcess/main.py uninstall
 RemainAfterExit=yes
 
 [Install]

@@ -27,7 +27,7 @@ SERVICE_DIR := service
 SCRIPTS_DIR := scripts
 BIOS_DIR := bios_bin
 CONF_DIR := conf
-PROCESS_DIR := clxProcess
+PROCESS_DIR := dsProcess
 IXGBE_VERSION := 5.9.4
 
 
@@ -54,15 +54,6 @@ build:
 			python3 setup.py build; \
 			python3 setup.py bdist_wheel -d $(MOD_SRC_DIR)/$${mod}/utils; \
 			cd $(MOD_SRC_DIR);\
-		fi; \
-		if [ $$mod = "clx12800-32d" ]; then \
-			make clean -C $(KERNEL_SRC)/build M=$(MOD_SRC_DIR)/$${mod}/modules; \
-			make modules -C $(KERNEL_SRC)/build M=$(MOD_SRC_DIR)/$${mod}/modules EXTRA_CFLAGS+=${MODULE_CFLAGS}; \
-			cd $(MOD_SRC_DIR)/$${mod}; \
-			python2 setup.py build; \
-			python2 setup.py bdist_wheel -d $(MOD_SRC_DIR)/$${mod}/utils; \
-			python3 setup.py build; \
-			python3 setup.py bdist_wheel -d $(MOD_SRC_DIR)/$${mod}/utils; \
 		fi; \
 	done)
 
@@ -106,15 +97,6 @@ binary-indep:
 		if [ $$mod = "ds610-48c8d" ]; then \
 			dh_installdirs -p$(PACKAGE_PRE_NAME)-$${mod} /usr/share/sonic/device/x86_64-flines_ds610_48c8d-r0; \
 			cp $(MOD_SRC_DIR)/$${mod}/$(UTILS_DIR)/*.whl debian/$(PACKAGE_PRE_NAME)-$${mod}/usr/share/sonic/device/x86_64-flines_ds610_48c8d-r0; \
-			if [ $$CONFIGURED_ARCH = "amd64" ]; then \
-			# Add bios upgrade tool to device(usr/local/bin), maurice 20201125 \
-			cp -r $(MOD_SRC_DIR)/$${mod}/bios_bin debian/$(PACKAGE_PRE_NAME)-$${mod}/usr/local/bin/; \
-			fi; \
-			cp $(MOD_SRC_DIR)/$${mod}/$(SERVICE_DIR)/platform_api_mgnt.sh debian/$(PACKAGE_PRE_NAME)-$${mod}/usr/local/bin/; \
-		fi; \
-		if [ $$mod = "clx12800-32d" ]; then \
-			dh_installdirs -p$(PACKAGE_PRE_NAME)-$${mod} /usr/share/sonic/device/clounix_clx12800_32d-r0; \
-			cp $(MOD_SRC_DIR)/$${mod}/$(UTILS_DIR)/*.whl debian/$(PACKAGE_PRE_NAME)-$${mod}/usr/share/sonic/device/clounix_clx12800_32d-r0; \
 			if [ $$CONFIGURED_ARCH = "amd64" ]; then \
 			# Add bios upgrade tool to device(usr/local/bin), maurice 20201125 \
 			cp -r $(MOD_SRC_DIR)/$${mod}/bios_bin debian/$(PACKAGE_PRE_NAME)-$${mod}/usr/local/bin/; \
