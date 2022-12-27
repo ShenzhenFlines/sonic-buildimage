@@ -89,6 +89,7 @@ obj-m += tps546b24a.o
 obj-m += tmp75.o
 obj-m += adm1166.o
 obj-m += cputemp.o
+obj-m += pca9555.o
 obj-m += s3ip_netlink.o
 
 all:

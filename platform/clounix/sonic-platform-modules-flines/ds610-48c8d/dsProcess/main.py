@@ -43,6 +43,7 @@ KERNEL_MODULE = [
     'tps546b24a',
     'tmp75',
     'adm1166',
+    'pca9555',
     'cputemp'
 ]
 
@@ -76,7 +77,7 @@ def checkDriver():
 #]
 
 i2c_topology_dict=[
-    {'bus': "i2c-0",   'driver': "clx_pca9548",   'address': "0x26"},
+    {'bus': "i2c-0",   'driver': "pca9555",       'address': "0x26"},
     {'bus': "i2c-1",   'driver': "gw1200d",       'address': "0x58"},
     {'bus': "i2c-1",   'driver': "tmp75c",        'address': "0x4a"},
     {'bus': "i2c-1",   'driver': "24c02",         'address': "0x50"},
