@@ -70,7 +70,7 @@ ssize_t mfr_info_show(struct device *dev, struct device_attribute *attr, char *b
 
 /* {'green':'0', 'amber':'1', 'off':'2', 'blink_green':'3', 'blink_amber':'4'}, */
 #define led_green (0)
-#define led_amber (1)
+#define led_blink_red (1)
 #define led_off (2)
 #define led_blink_green (3)
 #define stat_word_fail (0x7fec)
@@ -109,15 +109,15 @@ ssize_t led_status_show(struct device *dev, struct device_attribute *attr, char 
     unsigned int led_status = led_off;
     char *led_status_list[] = {
         "green",
-        "amber",
+        "blink_red",
         "off",
         "blink_green",
     };
 
     if (client->addr == psu_1_addr)
-        stat = stat & 0x7;
-    else if (client->addr == psu_2_addr)
         stat = (stat >> 4) & 0x7;
+    else if (client->addr == psu_2_addr)
+        stat = stat & 0x7;
     else
         return 0;
 
@@ -127,11 +127,11 @@ ssize_t led_status_show(struct device *dev, struct device_attribute *attr, char 
         led_status = led_off;
 
     if (stat & pwok)
-        led_status = led_blink_green;
+        led_status = led_green;
 
     psu_stat_data = pmbus_read_word_data(client, 0, PMBUS_STATUS_WORD);
     if ((psu_stat_data & stat_word_fail) != 0)
-        led_status = led_amber;
+        led_status = led_blink_red;
 
     return sprintf(buf, "%s\n", led_status_list[led_status]);
 }
