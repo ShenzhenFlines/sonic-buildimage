@@ -179,7 +179,7 @@ static void process_elec_data(unsigned long long *data, unsigned char index, uns
 
         case 0xa6:
             if (addr == 0x34) {
-                *data = (*data*10472)/1000;
+                *data = (*data*11519)/1000;
             } else {
                 *data = (*data*4363)/1000;
             }
