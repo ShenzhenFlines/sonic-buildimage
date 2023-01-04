@@ -87,8 +87,8 @@ static unsigned int loglevel = LOG_INFO | LOG_WARNING | LOG_ERR ;
 
 #define FPGA_PSU_MGR_RST (1 << 31)
 #define FPGA_PSU_MGR_ENABLE ((1 << 30) | (0x64 << 16))
-#define FPGA_PSU_TX_FINISH_MASK 0x80000000UL
-#define FPGA_PSU_TX_ERROR_MASK 0x40000000UL
+#define FPGA_PSU_TX_FINISH_MASK (0x80000000UL)
+#define FPGA_PSU_TX_ERROR_MASK (0x40000000UL)
 
 #define FPGA_PSU_MGR_RD_BYTE (0x81 << 24)
 #define FPGA_PSU_MGR_WT_BYTE (0x84 << 24)
@@ -425,7 +425,7 @@ static int clounix_i2c_smbus_xfer(struct i2c_adapter *adap, unsigned short addr,
     if (wait_bus_busy_status(priv, 0) == 0)
         return -EBUSY;
 
-    // pega_print(DEBUG, "clounix_i2c_smbus_xfer addr: %x size: %x command %x rw %x\r\n", addr, size, command, read_write);
+    pega_print(DEBUG, "clounix_i2c_smbus_xfer addr: %x size: %x command %x rw %x\r\n", addr, size, command, read_write);
 
     mutex_lock(&priv->lock);
 
@@ -603,7 +603,7 @@ static int clounix_i2c_smbus_xfer_psu1(struct i2c_adapter *adap, unsigned short 
 
     unsigned int *tmp_addr = NULL;
 
-    // pega_print(DEBUG, "clounix_i2c_smbus_xfer_psu1 addr : %x size: %x command %x rw %x\r\n", addr, size, command, read_write);
+    pega_print(DEBUG, "clounix_i2c_smbus_xfer_psu1 addr : %x size: %x command %x rw %x\r\n", addr, size, command, read_write);
 
     mutex_lock(&priv->lock);
 
@@ -828,6 +828,7 @@ static int clounix_i2c_smbus_xfer_psu1(struct i2c_adapter *adap, unsigned short 
     }
 
     mutex_unlock(&priv->lock);
+    usleep_range(6000, 10000);
     return 0;
 
 out:
@@ -1068,7 +1069,7 @@ static int clounix_i2c_smbus_xfer_psu0(struct i2c_adapter *adap, unsigned short 
 
     unsigned int *tmp_addr = NULL;
 
-    // pega_print(DEBUG, "clounix_i2c_smbus_xfer_psu0 addr : %x size: %x command %x rw %x\r\n", addr, size, command, read_write);
+    pega_print(DEBUG, "clounix_i2c_smbus_xfer_psu0 addr : %x size: %x command %x rw %x\r\n", addr, size, command, read_write);
 
     mutex_lock(&priv->lock);
 
@@ -1293,6 +1294,7 @@ static int clounix_i2c_smbus_xfer_psu0(struct i2c_adapter *adap, unsigned short 
     }
 
     mutex_unlock(&priv->lock);
+    usleep_range(6000, 10000);
     return 0;
 
 out:
