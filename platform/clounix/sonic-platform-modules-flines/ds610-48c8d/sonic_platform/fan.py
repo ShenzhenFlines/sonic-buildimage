@@ -255,7 +255,7 @@ class Fan(FanBase):
         elif (int(attr_rv, 16) == 0x3):
             color = self.STATUS_LED_COLOR_RED          
         elif (int(attr_rv, 16) == 0x4):
-            color = self.STATUS_LED_COLOR_GREEN
+            color = self.STATUS_LED_COLOR_RED
 
         return color
 
