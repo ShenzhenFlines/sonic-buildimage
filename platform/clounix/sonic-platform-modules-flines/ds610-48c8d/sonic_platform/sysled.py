@@ -206,6 +206,22 @@ class SYSLED(DeviceBase):
         """
         return self._get_led_status('bmc_led_status', 'N/A')
 
+    def set_bmc_led_status(self, color):
+        """
+        Set the bmc status rear color
+
+        Args:
+            color: A string representing the color with which to set the
+                   bmc LED
+
+        Returns:
+            bool: True if bmc LED state is set successfully, False if not
+        """
+        if color not in self.led_dict_id:
+            return False
+
+        return self._set_attr_val('bmc_led_status', self.led_dict_id[color])
+
     def get_fan_led_status(self):
         """
         Retrieves the fan led status rear of the sysled
@@ -216,6 +232,22 @@ class SYSLED(DeviceBase):
         """
         return self._get_led_status('fan_led_status', 'N/A')
 
+    def set_fan_led_status(self, color):
+        """
+        Set the fan status rear color
+
+        Args:
+            color: A string representing the color with which to set the
+                   fan LED
+
+        Returns:
+            bool: True if fan LED state is set successfully, False if not
+        """
+        if color not in self.led_dict_id:
+            return False
+
+        return self._set_attr_val('fan_led_status', self.led_dict_id[color])
+
     def get_psu_led_status(self):
         """
         Retrieves the psu led status rear of the sysled
@@ -225,6 +257,22 @@ class SYSLED(DeviceBase):
             specified.
         """
         return self._get_led_status('psu_led_status', 'N/A')
+
+    def set_psu_led_status(self, color):
+        """
+        Set the psu status rear color
+
+        Args:
+            color: A string representing the color with which to set the
+                   psu LED
+
+        Returns:
+            bool: True if psu LED state is set successfully, False if not
+        """
+        if color not in self.led_dict_id:
+            return False
+
+        return self._set_attr_val('psu_led_status', self.led_dict_id[color])
 
     def get_id_led_status(self):
         """
@@ -252,18 +300,4 @@ class SYSLED(DeviceBase):
 
         return self._set_attr_val('id_led_status', self.led_dict_id[color])
 
-    def set_psu_led_status(self, color):
-        """
-        Set the psu status rear color
-
-        Args:
-            color: A string representing the color with which to set the
-                   psu LED
-
-        Returns:
-            bool: True if psu LED state is set successfully, False if not
-        """
-        if color not in self.led_dict_id:
-            return False
-
-        return self._set_attr_val('psu_led_status', self.led_dict_id[color])
+        
