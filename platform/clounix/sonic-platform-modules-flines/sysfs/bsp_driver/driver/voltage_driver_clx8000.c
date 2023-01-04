@@ -13,8 +13,8 @@
 //internal function declaration
 struct voltage_driver_clx8000 driver_voltage_clx8000;
 
-#define TOTAL_SENSOR_NUM (12)
-#define REAL_MAX_SENSOR_NUM (4)
+#define TOTAL_SENSOR_NUM (8)
+#define REAL_MAX_SENSOR_NUM (2)
 
 #define VOL_NODE "in"
 
@@ -29,11 +29,16 @@ static DEFINE_RWLOCK(list_lock);
     [1]:location in sensor_arry
     [2]:sensor offse
 */
-static short sensor_map[][3] = {
+/*static short sensor_map[][3] = {
     {0x10, 0, -1},
     {0x20, 1, 1},
     {0x21, 2, 5},
     {0x29, 3, 9},
+    {0x0, 0},
+};*/
+static short sensor_map[][3] = {
+    {0x20, 0, -1},
+    {0x21, 1, 3},
     {0x0, 0},
 };
 
@@ -42,11 +47,15 @@ static short sensor_map[][3] = {
     [1]: location in sensor_arry
 */
 static unsigned char vol_index_range_map[][2] = {
+    {4, 0},
+    {8, 1},
+};
+/*static unsigned char vol_index_range_map[][2] = {
     {2, 0},
     {6, 1},
     {10, 2},
     {0, 3},
-};
+};*/
 
 static struct i2c_client *sensor_arry[REAL_MAX_SENSOR_NUM + 1] = {0};
 

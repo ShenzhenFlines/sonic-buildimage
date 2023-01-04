@@ -308,19 +308,6 @@
         ],
         "voltages": [
             {
-                "name": "P1V8",
-                "class":"tps546b24a",
-                "adapter": 3,
-                "slave_addr":41,
-                "pages":0,
-                "step":1953125,
-                "default":912,
-                "step_multiple":1000000,
-                "vout_mask":"0xffff",
-                "vout_cmd_mask":"0xffff",
-                "range":2
-            },
-            {
                 "name": "P0V79",
                 "class":"MP2882",
                 "adapter": 3,

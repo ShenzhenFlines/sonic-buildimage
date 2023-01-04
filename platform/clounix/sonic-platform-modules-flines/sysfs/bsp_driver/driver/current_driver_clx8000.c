@@ -13,8 +13,8 @@
 //internal function declaration
 struct current_driver_clx8000 driver_current_clx8000;
 
-#define TOTAL_SENSOR_NUM (6)
-#define REAL_MAX_SENSOR_NUM (4)
+#define TOTAL_SENSOR_NUM (4)
+#define REAL_MAX_SENSOR_NUM (2)
 
 #define CURR_NODE "curr"
 #define CURR_MIN "_min"
@@ -29,23 +29,32 @@ static DEFINE_RWLOCK(list_lock);
     [2]:sensor offse
 */
 static short sensor_map[][3] = {
+    {0x20, 0, -1},
+    {0x21, 1,  1},
+    {0x0, 0},
+};
+/*static short sensor_map[][3] = {
     {0x10, 0, -1},
     {0x20, 1, 0},
     {0x21, 2, 2},
     {0x29, 3, 4},
     {0x0, 0},
-};
+};*/
 
 /*
     [0]: range
     [1]: location in sensor_arry
 */
 static unsigned char curr_index_range_map[][2] = {
+    {2, 0},
+    {4, 1},
+};
+/*static unsigned char curr_index_range_map[][2] = {
     {1, 0},
     {3, 1},
     {5, 2},
     {0, 3},
-};
+};*/
 
 static struct i2c_client *sensor_arry[REAL_MAX_SENSOR_NUM + 1] = {0};
 
