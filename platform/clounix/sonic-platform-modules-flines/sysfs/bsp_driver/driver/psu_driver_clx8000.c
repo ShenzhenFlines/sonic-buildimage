@@ -1047,7 +1047,8 @@ static ssize_t clx_driver_clx8000_get_psu_temp_max_hyst(void *driver, unsigned i
     client = client_arry[psu_index];
     temp_index += PSU_TEMP_INDEX_OFFSET;
     if (client != NULL) {
-        sprintf(node_name, "%s%d%s", TEMP_CLASS, temp_index, TEMP_MAX_HYST);
+        //sprintf(node_name, "%s%d%s", TEMP_CLASS, temp_index, TEMP_MAX_HYST);
+        sprintf(node_name, "%s%d%s", TEMP_CLASS, temp_index, TEMP_MAX);
         ret = get_attr_val_by_name(client, node_name, buf);
     }
     read_unlock(&list_lock);
@@ -1069,7 +1070,8 @@ int clx_driver_clx8000_set_psu_temp_max_hyst(void *driver, unsigned int psu_inde
     client = client_arry[psu_index];
     temp_index += PSU_TEMP_INDEX_OFFSET;
     if (client != NULL) {
-        sprintf(node_name, "%s%d%s", TEMP_CLASS, temp_index, TEMP_MAX_HYST);
+        //sprintf(node_name, "%s%d%s", TEMP_CLASS, temp_index, TEMP_MAX_HYST);
+        sprintf(node_name, "%s%d%s", TEMP_CLASS, temp_index, TEMP_MAX);
         ret = set_attr_val_by_name(client, node_name, buf, count);
     }
     read_unlock(&list_lock);
