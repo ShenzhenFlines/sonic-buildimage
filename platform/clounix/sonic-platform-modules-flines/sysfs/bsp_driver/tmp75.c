@@ -69,8 +69,8 @@ static const unsigned short normal_i2c[] = { 0x48, 0x49, 0x4a, 0x4b, 0x4c,
 /* The LM75 registers */
 #define LM75_REG_TEMP		0x00
 #define LM75_REG_CONF		0x01
-#define LM75_REG_HYST		0x02
-#define LM75_REG_MAX		0x03
+#define LM75_REG_MAX		0x02
+#define LM75_REG_HYST		0x03
 
 /* Each client has this additional data */
 struct lm75_data {
@@ -250,7 +250,7 @@ static bool lm75_is_volatile_reg(struct device *dev, unsigned int reg)
 static const struct regmap_config lm75_regmap_config = {
 	.reg_bits = 8,
 	.val_bits = 16,
-	.max_register = LM75_REG_MAX,
+	.max_register = LM75_REG_HYST,
 	.writeable_reg = lm75_is_writeable_reg,
 	.volatile_reg = lm75_is_volatile_reg,
 	.val_format_endian = REGMAP_ENDIAN_BIG,
@@ -587,17 +587,17 @@ static int lm75_detect(struct i2c_client *new_client,
 		 || i2c_smbus_read_byte_data(new_client, 6) != 0xff)
 			return -ENODEV;
 		is_lm75a = 1;
-		hyst = i2c_smbus_read_byte_data(new_client, 2);
-		os = i2c_smbus_read_byte_data(new_client, 3);
+		hyst = i2c_smbus_read_byte_data(new_client, 3);
+		os = i2c_smbus_read_byte_data(new_client, 2);
 	} else { /* Traditional style LM75 detection */
 		/* Unused addresses */
-		hyst = i2c_smbus_read_byte_data(new_client, 2);
+		hyst = i2c_smbus_read_byte_data(new_client, 3);
 		if (i2c_smbus_read_byte_data(new_client, 4) != hyst
 		 || i2c_smbus_read_byte_data(new_client, 5) != hyst
 		 || i2c_smbus_read_byte_data(new_client, 6) != hyst
 		 || i2c_smbus_read_byte_data(new_client, 7) != hyst)
 			return -ENODEV;
-		os = i2c_smbus_read_byte_data(new_client, 3);
+		os = i2c_smbus_read_byte_data(new_client, 2);
 		if (i2c_smbus_read_byte_data(new_client, 4) != os
 		 || i2c_smbus_read_byte_data(new_client, 5) != os
 		 || i2c_smbus_read_byte_data(new_client, 6) != os
@@ -614,8 +614,8 @@ static int lm75_detect(struct i2c_client *new_client,
 	/* Addresses cycling */
 	for (i = 8; i <= 248; i += 40) {
 		if (i2c_smbus_read_byte_data(new_client, i + 1) != conf
-		 || i2c_smbus_read_byte_data(new_client, i + 2) != hyst
-		 || i2c_smbus_read_byte_data(new_client, i + 3) != os)
+		 || i2c_smbus_read_byte_data(new_client, i + 3) != hyst
+		 || i2c_smbus_read_byte_data(new_client, i + 2) != os)
 			return -ENODEV;
 		if (is_lm75a && i2c_smbus_read_byte_data(new_client, i + 7)
 				!= LM75A_ID)
