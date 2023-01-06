@@ -112,6 +112,25 @@ static unsigned int loglevel = LOG_INFO | LOG_WARNING | LOG_ERR ;
 
 #define FPGA_PSU0_RAM_ADDR_OFFSET (0x1e0000)
 
+#define FPGA_EEPROM_MGR_RST (1 << 31)
+#define FPGA_EEPROM_MGR_ENABLE ((1 << 30) | (1 << 29) | (0x64 << 16))
+#define FPGA_EEPROM_TX_FINISH_MASK (0x80000000UL)
+#define FPGA_EEPROM_TX_ERROR_MASK (0x40000000UL)
+
+#define FPGA_EEPROM_MGR_RD_BYTE (0x81 << 24)
+#define FPGA_EEPROM_MGR_WT_BYTE (0x84 << 24)
+#define FPGA_EEPROM_MGR_RD_WORD (0x82 << 24)
+#define FPGA_EEPROM_MGR_WT_WORD (0x88 << 24)
+#define FPGA_EEPROM_MGR_WT_NONE (0x85 << 24)
+
+#define FPGA_EEPROM_BASE (0x2000)
+#define FPGA_EEPROM_CFG (FPGA_EEPROM_BASE + 0x00)
+#define FPGA_EEPROM_CTRL (FPGA_EEPROM_BASE + 0x04)
+#define FPGA_EEPROM_STAT (FPGA_EEPROM_BASE + 0x08)
+#define FPGA_EEPROM_DBG (FPGA_EEPROM_BASE + 0x0c)
+
+#define FPGA_EEPROM_RAM_ADDR_OFFSET (0x1f0000)
+
 struct master_conf
 {
     int offset;
@@ -128,6 +147,7 @@ const struct master_conf priv_conf[] = {
     {0x000000, "fpga-psu0"}, /*5a*/
     {0x270000, "fpga-adm1"},
     {0x280000, "fpga-pmbus1"},
+    {0x000000, "fpga-rebootrom"},
 };
 
 struct master_priv_data
@@ -1496,6 +1516,237 @@ out:
 }
 
 
+static int eeprom_wait_bus_tx_done(struct master_priv_data *priv)
+{
+    unsigned int data;
+    unsigned long timeout = jiffies + XIIC_I2C_TIMEOUT;
+
+    do
+    {
+        data = readl(priv->mmio + FPGA_EEPROM_STAT);
+
+        if (data & FPGA_EEPROM_TX_FINISH_MASK)
+        {
+            if (data & FPGA_EEPROM_TX_ERROR_MASK)
+            {
+                pega_print(DEBUG, "eeprom_wait_bus_tx_done data ECOMM error\r\n");
+
+                return -ECOMM;
+            }
+
+            return 0;
+        }
+
+    } while (time_before(jiffies, timeout));
+
+    pega_print(DEBUG, "eeprom_wait_bus_tx_done data ETIMEDOUT error\r\n");
+
+    return -ETIMEDOUT;
+}
+
+static int clounix_i2c_xfer_reboot_eeprom(struct i2c_adapter *adap, struct i2c_msg *msgs, int num)
+{
+    struct master_priv_data *priv = i2c_get_adapdata(adap);
+    struct i2c_msg *p;
+    unsigned char addr = 0, r_addr = 0, w_addr = 0, reg_addr = 0;
+    unsigned int *tmp_addr = NULL;
+    unsigned int tmp_value = 0, i = 0, j = 0;
+
+    mutex_lock(&priv->lock);
+
+    if (num == 1)//write
+    {
+        p = &msgs[0];
+
+        if (p->flags & I2C_M_TEN)
+            goto out;
+
+        addr = i2c_8bit_addr_from_msg(p);
+
+        w_addr = (addr & (~(0x01)));
+
+        r_addr = (addr | 0x01);
+
+        tmp_value = (FPGA_EEPROM_MGR_RST | FPGA_EEPROM_MGR_ENABLE | (r_addr << 8) | w_addr);
+
+        writel(tmp_value, priv->mmio + FPGA_EEPROM_CFG);
+        
+        if(p->len > 8)
+        {
+            p->len = 8;
+        }
+
+        if (p->len == 1)
+        {
+            tmp_value = (FPGA_EEPROM_MGR_WT_BYTE | ((p->buf[0] & 0xFF) << 16) | (p->len << 8) | p->buf[1]);
+
+            writel(tmp_value, priv->mmio + FPGA_EEPROM_CTRL);
+
+            if (eeprom_wait_bus_tx_done(priv) != 0)
+            {
+                goto out;
+            }
+        }
+        else
+        {
+            tmp_addr = (unsigned int *)(priv->mmio + FPGA_EEPROM_RAM_ADDR_OFFSET);
+
+            for (j = 1; j <= p->len; j += 4)
+            {
+                tmp_value = p->buf[j];
+
+                if((j + 1) > p->len)
+                {
+                    writel(tmp_value, tmp_addr);
+
+                    break;
+                }
+
+                tmp_value += (p->buf[j + 1] << 8);
+
+                if((j + 2) > p->len)
+                {
+                    writel(tmp_value, tmp_addr);
+
+                    break;
+                } 
+
+                tmp_value += (p->buf[j + 2] << 16);
+
+                if((j + 3) > p->len)
+                {
+                    writel(tmp_value, tmp_addr);
+
+                    break;
+                }              
+
+                tmp_value += (p->buf[j + 3] << 24);
+
+                writel(tmp_value, tmp_addr);
+
+                tmp_addr++;
+            }
+
+            tmp_value = 0;
+
+            tmp_value = (FPGA_EEPROM_MGR_WT_WORD | ((p->buf[0] & 0xFF) << 16) | (p->len << 8));
+
+            writel(tmp_value, priv->mmio + FPGA_EEPROM_CTRL);
+
+            if (eeprom_wait_bus_tx_done(priv) != 0)
+            {
+                goto out;
+            }
+        }
+    }
+    else//read
+    {
+        for (i = 0; i < num; i++)
+        {
+            p = &msgs[i];
+
+            if (p->flags & I2C_M_TEN)
+                goto out;
+
+            addr = i2c_8bit_addr_from_msg(p);
+
+            w_addr = (addr & (~(0x01)));
+
+            r_addr = (addr | 0x01);
+
+            if (p->flags & I2C_M_RD)
+            {
+                tmp_value = (FPGA_EEPROM_MGR_RST | FPGA_EEPROM_MGR_ENABLE | (r_addr << 8) | w_addr);
+
+                writel(tmp_value, priv->mmio + FPGA_EEPROM_CFG);
+
+                if(p->len > 8)
+                {
+                    p->len = 8;
+                }
+
+                if (p->len == 1)
+                {
+                    tmp_value = 0;
+
+                    tmp_value = (FPGA_EEPROM_MGR_RD_BYTE | (reg_addr & 0xFF) << 16 | (p->len << 8));
+
+                    writel(tmp_value, priv->mmio + FPGA_EEPROM_CTRL);
+
+                    if (eeprom_wait_bus_tx_done(priv) != 0)
+                    {
+                        goto out;
+                    }
+                    else
+                    {
+                        p->buf[0] = readb(priv->mmio + FPGA_EEPROM_STAT);
+                    }
+                }
+                else
+                {
+                    tmp_value = 0;
+
+                    tmp_value = (FPGA_EEPROM_MGR_RD_WORD | ((reg_addr & 0xFF) << 16) | ((p->len) << 8));
+
+                    writel(tmp_value, priv->mmio + FPGA_EEPROM_CTRL);
+
+                    if (eeprom_wait_bus_tx_done(priv) != 0)
+                    {
+                        goto out;
+                    }
+                    else
+                    {
+                        tmp_addr = (unsigned int *)(priv->mmio + FPGA_EEPROM_RAM_ADDR_OFFSET);
+
+                        for (j = 0; j < p->len; j += 4)
+                        {
+                            tmp_value = readl(tmp_addr);
+
+                            p->buf[j] = (tmp_value & 0xFF);
+
+                            if ((j + 1) >= p->len)
+                            {
+                                break;
+                            }
+
+                            p->buf[j + 1] = ((tmp_value >> 8) & 0xFF);
+
+                            if ((j + 2) >= p->len)
+                            {
+                                break;
+                            }
+
+                            p->buf[j + 2] = ((tmp_value >> 16) & 0xFF);
+
+                            if ((j + 3) >= p->len)
+                            {
+                                break;
+                            }
+
+                            p->buf[j + 3] = ((tmp_value >> 24) & 0xFF);
+
+                            tmp_addr++;
+                        }
+                    }
+                }
+            }
+            else
+            {
+                reg_addr = p->buf[0];
+            }
+        }
+    }
+
+    mutex_unlock(&priv->lock);
+
+    return num;
+
+out:
+    mutex_unlock(&priv->lock);
+
+    return -ETIMEDOUT;
+}
+
 static struct i2c_algorithm clounix_i2c_algo = {
     .smbus_xfer = clounix_i2c_smbus_xfer,
     .master_xfer = clounix_i2c_xfer,
@@ -1511,6 +1762,11 @@ static struct i2c_algorithm clounix_i2c_master1_algo = {
 static struct i2c_algorithm clounix_i2c_master0_algo = {
     .smbus_xfer = clounix_i2c_smbus_xfer_psu0,
     .master_xfer = clounix_i2c_xfer_psu0,
+    .functionality = clounix_i2c_func,
+};
+
+static struct i2c_algorithm clounix_i2c_master2_algo = {
+    .master_xfer = clounix_i2c_xfer_reboot_eeprom,
     .functionality = clounix_i2c_func,
 };
 
@@ -1559,6 +1815,10 @@ static int __init init_fpga_i2c_group(void)
         {
             adap->algo = &clounix_i2c_master0_algo;
         }
+        else if (strncmp(priv_conf[i].name, "fpga-rebootrom", strlen("fpga-rebootrom")) == 0)
+        {
+            adap->algo = &clounix_i2c_master2_algo;
+        }
         else
         {
             adap->algo = &clounix_i2c_algo;
@@ -1571,8 +1831,17 @@ static int __init init_fpga_i2c_group(void)
         priv[i].mmio = base + priv_conf[i].offset;
         mutex_init(&(priv[i].lock));
 
-        if (fpga_i2c_reinit(&priv[i], XIIC_I2C_TIMEOUT) != 0)
-            goto err_i2c_group;
+        if((strncmp(priv_conf[i].name, "fpga-rebootrom", strlen("fpga-rebootrom")) == 0)\
+        || (strncmp(priv_conf[i].name, "fpga-psu0", strlen("fpga-psu0")) == 0)\
+        || (strncmp(priv_conf[i].name, "fpga-psu1", strlen("fpga-psu1")) == 0))
+        {
+
+        }
+        else
+        {
+            if (fpga_i2c_reinit(&priv[i], XIIC_I2C_TIMEOUT) != 0)
+                goto err_i2c_group;
+        }
 
         err = i2c_add_adapter(adap);
         if (err)

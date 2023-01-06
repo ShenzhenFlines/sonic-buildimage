@@ -90,11 +90,9 @@ i2c_topology_dict=[
     {'bus': "i2c-7",   'driver': "tmp75c",        'address': "0x49"},
     {'bus': "i2c-7",   'driver': "24c02",         'address': "0x52"},
     {'bus': "i2c-8",   'driver': "adm1166",       'address': "0x36"},
-    {'bus': "i2c-9",   'driver': "mp2882",        'address': "0x21"}
-
+    {'bus': "i2c-9",   'driver': "mp2882",        'address': "0x21"},
+    {'bus': "i2c-10",  'driver': "24c02",         'address': "0x50"}
 ]
-
-
 
 def doInstall():
     status, output = common.doBash("depmod -a")
