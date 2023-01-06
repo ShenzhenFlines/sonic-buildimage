@@ -196,13 +196,13 @@ static ssize_t watchdog_enable_status_show(struct switch_obj *obj, struct switch
 
     check_p(g_wdt_drv);
     check_p(g_wdt_drv->get_watchdog_enable_status);
-
     ret = g_wdt_drv->get_watchdog_enable_status(buf, PAGE_SIZE);
     if (ret < 0) {
         WDT_ERR("get watchdog enable status failed, ret: %d\n", ret);
         return (ssize_t)snprintf(buf, PAGE_SIZE, "%s\n", SYSFS_DEV_ERROR);
     }
     WDT_DBG("get watchdog enable status success\n");
+    
     return ret;
 }
 
@@ -232,7 +232,6 @@ static ssize_t watchdog_enable_status_store(struct switch_obj *obj, struct switc
 static ssize_t watchdog_reset_store(struct switch_obj *obj, struct switch_attribute *attr,
                    const char *buf, size_t count)
 {
-    return count;
     int ret, value;
 
     check_p(g_wdt_drv);
@@ -250,8 +249,11 @@ static ssize_t watchdog_reset_store(struct switch_obj *obj, struct switch_attrib
         return -EIO;
     }
     WDT_DBG("set watchdog reset %d success\n", ret);
+
     return count;
 }
+
+
 
 /************************************watchdog*******************************************/
 static struct switch_attribute watchdog_debug_attr = __ATTR(debug, S_IRUGO | S_IWUSR, watchdog_debug_show, watchdog_debug_store);
