@@ -399,7 +399,7 @@ static int create_core_attrs(struct temp_data *tdata, struct device *dev,
 			show_label, show_crit_alarm, show_temp, show_tjmax,
 			show_ttarget };
 	static const char *const suffixes[TOTAL_ATTRS] = {
-		"label", "crit_alarm", "input", "crit", "max"
+		"label", "crit_alarm", "input", "max", "crit"
 	};
 
 	for (i = 0; i < tdata->attr_size; i++) {
