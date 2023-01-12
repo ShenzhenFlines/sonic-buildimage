@@ -128,7 +128,7 @@ static unsigned char pca9555_read_reg(struct pca9555_dev *dev, u8 reg)
 #if 1
 	struct i2c_client *client = (struct i2c_client *)dev->private_data;
 	data = i2c_smbus_read_byte_data(client, reg);
-	printk("pca9555:pca9555_read_reg ret data = 0x%x \r\n",data);
+	/*printk("pca9555:pca9555_read_reg ret data = 0x%x \r\n",data); */
 	return data;
 #endif
 }
@@ -201,8 +201,7 @@ static ssize_t pca9555_read(struct file *filp, char __user *buf, size_t cnt, lof
 	long err = 0;
 
 	struct pca9555_dev *dev = (struct pca9555_dev *)filp->private_data;
-	printk("pca9555:kernel pca9555_read \r\n");
-   
+	/*printk("pca9555:kernel pca9555_read \r\n");*/   
 
 	pca9555_readdata(dev);
 	err = copy_to_user(buf, dev->regdata, cnt);
@@ -243,7 +242,7 @@ static ssize_t pca9555_write(struct file *filp, const char __user *buf, size_t c
     for(i=0; i< cnt; i++)
 	{
      /*pca9555_write_regs(dev, reg, &databuf[i+1], 1);*/
-	 	printk("pca9555:pca9555_write databuf[%d].reg = 0x%x,databuf[%d].val = 0x%x.\n",i,databuf[i].reg,i,databuf[i].val);
+	 /*	printk("pca9555:pca9555_write databuf[%d].reg = 0x%x,databuf[%d].val = 0x%x.\n",i,databuf[i].reg,i,databuf[i].val);*/
 		retvalue = i2c_smbus_write_byte_data(client, databuf[i].reg, databuf[i].val);
 		if (retvalue < 0) {
 			printk("pca9555:i2c_smbus_write_byte_data return failed.\n");
