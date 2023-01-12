@@ -94,7 +94,7 @@ static int clounix_fpga_probe(struct pci_dev *pdev, const struct pci_device_id *
 {
     int err;
     /*mask interrupt*/
-   #if 1
+   #if 0
     if (pci_find_capability(pdev, PCI_CAP_ID_MSI) == 0) {
         FPGA_CLX8000_ERR("%s[%d] MSI not support.\r\n", __func__, __LINE__);
         return -EPERM;
@@ -121,7 +121,7 @@ static int clounix_fpga_probe(struct pci_dev *pdev, const struct pci_device_id *
         goto err_ioremap;
     } 
     pci_set_drvdata(pdev, clounix_fpga_base);
-#if 1
+#if 0
     FPGA_CLX8000_ERR("support %d msi vector\n", pci_msi_vec_count(pdev));
     err = pci_alloc_irq_vectors(pdev, 1, 1, PCI_IRQ_MSI | PCI_IRQ_AFFINITY);
     if (err < 0) {
