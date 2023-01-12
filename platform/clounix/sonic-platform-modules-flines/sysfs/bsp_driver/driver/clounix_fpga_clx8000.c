@@ -94,18 +94,18 @@ static int clounix_fpga_probe(struct pci_dev *pdev, const struct pci_device_id *
 {
     int err;
     /*mask interrupt*/
-   /*
+   #if 1
     if (pci_find_capability(pdev, PCI_CAP_ID_MSI) == 0) {
         FPGA_CLX8000_ERR("%s[%d] MSI not support.\r\n", __func__, __LINE__);
         return -EPERM;
     }
-   */    
+       
     err = pci_enable_device(pdev);
     if (err) {
         FPGA_CLX8000_ERR("%s[%d] can't enbale device.\r\n", __func__, __LINE__);
         return -EPERM;
     }
-    
+    #endif
     if (devm_request_mem_region(&pdev->dev, pci_resource_start(pdev, 0), pci_resource_len(pdev, 0), "clounix_fpga") == 0) {
         FPGA_CLX8000_ERR("%s[%d] can't request iomem (0x%llx).\r\n", __func__, __LINE__, pci_resource_start(pdev, 0));
         err = -EBUSY;
@@ -121,7 +121,7 @@ static int clounix_fpga_probe(struct pci_dev *pdev, const struct pci_device_id *
         goto err_ioremap;
     } 
     pci_set_drvdata(pdev, clounix_fpga_base);
-#if 0
+#if 1
     FPGA_CLX8000_ERR("support %d msi vector\n", pci_msi_vec_count(pdev));
     err = pci_alloc_irq_vectors(pdev, 1, 1, PCI_IRQ_MSI | PCI_IRQ_AFFINITY);
     if (err < 0) {

@@ -1747,6 +1747,254 @@ out:
     return -ETIMEDOUT;
 }
 
+
+static int clounix_i2c_smbus_xfer_reboot_eeprom(struct i2c_adapter *adap, unsigned short addr, unsigned short flags,
+                                       char read_write, unsigned char command, int size, union i2c_smbus_data *data)
+{
+    struct master_priv_data *priv = i2c_get_adapdata(adap);
+
+    unsigned int tmp_value = 0;
+
+    unsigned char r_addr = 0, w_addr = 0, i = 0, data_size = 0;
+
+    unsigned int *tmp_addr = NULL;
+
+    pega_print(DEBUG, "clounix_i2c_smbus_xfer_reboot_eeprom addr : %x size: %x command %x rw %x\r\n", addr, size, command, read_write);
+
+    mutex_lock(&priv->lock);
+
+    addr = (addr & 0x7f) << 1;
+
+    w_addr = addr;
+
+    r_addr = (addr | 0x01);
+
+    switch (size)
+    {
+
+    case I2C_SMBUS_BYTE:
+
+        tmp_value = (FPGA_EEPROM_MGR_RST | FPGA_EEPROM_MGR_ENABLE | (r_addr << 8) | w_addr);
+
+        writel(tmp_value, priv->mmio + FPGA_EEPROM_CFG);
+
+        if (read_write == I2C_SMBUS_READ)
+        {
+#if 0
+            tmp_value = (FPGA_EEPROM_MGR_RST | FPGA_EEPROM_MGR_ENABLE | (r_addr << 8) | w_addr);
+
+            writel((FPGA_EEPROM_MGR_RD_BYTE | ((command & 0xFF) << 16) | (data & 0xFF)), priv->mmio + FPGA_EEPROM_CTRL);
+
+            if (eeprom_wait_bus_tx_done(priv) != 0)
+            {
+                goto out;
+            }
+            else
+            {
+                data->byte = readb(priv->mmio + FPGA_EEPROM_STAT);
+            }
+#endif
+        }
+        else
+        {
+            tmp_value = 0;
+
+            tmp_value = (FPGA_EEPROM_MGR_WT_NONE | ((command & 0xFF) << 16) | (0x01 << 8));
+
+            writel(tmp_value, priv->mmio + FPGA_EEPROM_CTRL);
+
+            if (eeprom_wait_bus_tx_done(priv) != 0)
+            {
+                goto out;
+            }
+        }
+
+        break;
+
+    case I2C_SMBUS_BYTE_DATA:
+
+        tmp_value = (FPGA_EEPROM_MGR_RST | FPGA_EEPROM_MGR_ENABLE | (r_addr << 8) | w_addr);
+
+        writel(tmp_value, priv->mmio + FPGA_EEPROM_CFG);
+
+        if (read_write == I2C_SMBUS_READ)
+        { 
+            tmp_value = 0;
+
+            tmp_value = (FPGA_EEPROM_MGR_RD_BYTE | ((command & 0xFF) << 16) | (0x01 << 8));
+
+            writel(tmp_value, priv->mmio + FPGA_EEPROM_CTRL);
+
+            if (eeprom_wait_bus_tx_done(priv) != 0)
+            {
+                goto out;
+            }
+            else
+            {
+                data->byte = readb(priv->mmio + FPGA_EEPROM_STAT);
+            }
+        }
+        else
+        {
+            tmp_value = (FPGA_EEPROM_MGR_WT_BYTE | ((command & 0xFF) << 16) | (0x01 << 8) | (data->byte));
+
+            writel(tmp_value, priv->mmio + FPGA_EEPROM_CTRL);
+
+            if (eeprom_wait_bus_tx_done(priv) != 0)
+            {
+                goto out;
+            }
+
+        }
+
+        break;
+
+    case I2C_SMBUS_WORD_DATA:
+
+        tmp_value = (FPGA_EEPROM_MGR_RST | FPGA_EEPROM_MGR_ENABLE | (r_addr << 8) | w_addr);
+
+        writel(tmp_value, priv->mmio + FPGA_EEPROM_CFG);
+
+        if (read_write == I2C_SMBUS_READ)
+        {
+            tmp_value = 0;
+
+            tmp_value = (FPGA_EEPROM_MGR_RD_WORD | ((command & 0xFF) << 16) | (0x02 << 8));
+
+            writel(tmp_value, priv->mmio + FPGA_EEPROM_CTRL);
+
+            if (eeprom_wait_bus_tx_done(priv) != 0)
+            {
+                goto out;
+            }
+            else
+            {
+                data->word = readw((priv->mmio + FPGA_EEPROM_RAM_ADDR_OFFSET));
+            }
+        }
+        else
+        {
+            writew(data->word, (priv->mmio + FPGA_EEPROM_RAM_ADDR_OFFSET));
+
+            tmp_value = 0;
+
+            tmp_value = (FPGA_EEPROM_MGR_WT_WORD | ((command & 0xFF) << 16) | (0x02 << 8));
+
+            writel(tmp_value, (priv->mmio + FPGA_EEPROM_CTRL));
+
+            if (eeprom_wait_bus_tx_done(priv) != 0)
+            {
+                goto out;
+            }
+        }
+
+        break;
+
+    case I2C_SMBUS_BLOCK_DATA:
+
+        tmp_value = (FPGA_EEPROM_MGR_RST | FPGA_EEPROM_MGR_ENABLE | (r_addr << 8) | w_addr);
+
+        writel(tmp_value, priv->mmio + FPGA_EEPROM_CFG);
+
+        if (read_write == I2C_SMBUS_READ)
+        {
+            tmp_value = 0;
+
+            tmp_value = (FPGA_EEPROM_MGR_RD_WORD | ((command & 0xFF) << 16) | ((I2C_SMBUS_BLOCK_MAX + 1) << 8));
+
+            writel(tmp_value, priv->mmio + FPGA_EEPROM_CTRL);
+
+            if (eeprom_wait_bus_tx_done(priv) != 0)
+            {
+                goto out;
+            }
+            else
+            {
+                tmp_value = readl(priv->mmio + FPGA_EEPROM_RAM_ADDR_OFFSET);
+
+                data_size = (tmp_value & 0xFF);
+
+                pega_print(DEBUG, "I2C_SMBUS_BLOCK_DATA I2C_SMBUS_READ data_size %d\r\n", data_size);
+
+                if (data_size > I2C_SMBUS_BLOCK_MAX)
+                {
+                    goto out;
+                }
+
+                tmp_addr = (unsigned int *)(priv->mmio + FPGA_EEPROM_RAM_ADDR_OFFSET);
+
+                for (i = 0; i <= data_size; i += 4)
+                {
+                    tmp_value = readl(tmp_addr);
+
+                    data->block[i] = (tmp_value & 0xFF);
+
+                    if ((i + 1) > data_size)
+                    {
+                        break;
+                    }
+
+                    data->block[i + 1] = ((tmp_value >> 8) & 0xFF);
+
+                    if ((i + 2) > data_size)
+                    {
+                        break;
+                    }
+
+                    data->block[i + 2] = ((tmp_value >> 16) & 0xFF);
+
+                    if ((i + 3) > data_size)
+                    {
+                        break;
+                    }
+
+                    data->block[i + 3] = ((tmp_value >> 24) & 0xFF);
+
+                    tmp_addr++;
+                }
+            }
+        }
+        else
+        {
+            data_size = data->block[0];
+
+            tmp_addr = (unsigned int *)(priv->mmio + FPGA_EEPROM_RAM_ADDR_OFFSET);
+
+            for (i = 0; i <= data_size; i += 4)
+            {
+                tmp_value = (data->block[i] + (data->block[i + 1] << 8) + (data->block[i + 2] << 16) + (data->block[i + 3] << 24));
+
+                writel(tmp_value, tmp_addr);
+
+                tmp_addr++;
+            }
+
+            tmp_value = 0;
+
+            tmp_value = (FPGA_EEPROM_MGR_WT_WORD | ((command & 0xFF) << 16) | ((data_size + 1) << 8));
+
+            writel(tmp_value, priv->mmio + FPGA_EEPROM_CTRL);
+
+            if (eeprom_wait_bus_tx_done(priv) != 0)
+            {
+                goto out;
+            }
+        }
+        break;
+
+    default:
+        break;
+    }
+
+    mutex_unlock(&priv->lock);
+    usleep_range(6000, 10000);
+    return 0;
+
+out:
+    mutex_unlock(&priv->lock);
+    return -ETIMEDOUT;
+}
+
 static struct i2c_algorithm clounix_i2c_algo = {
     .smbus_xfer = clounix_i2c_smbus_xfer,
     .master_xfer = clounix_i2c_xfer,
@@ -1766,8 +2014,11 @@ static struct i2c_algorithm clounix_i2c_master0_algo = {
 };
 
 static struct i2c_algorithm clounix_i2c_master2_algo = {
+
+    .smbus_xfer = clounix_i2c_smbus_xfer_reboot_eeprom,
     .master_xfer = clounix_i2c_xfer_reboot_eeprom,
     .functionality = clounix_i2c_func,
+
 };
 
 extern void __iomem *clounix_fpga_base;

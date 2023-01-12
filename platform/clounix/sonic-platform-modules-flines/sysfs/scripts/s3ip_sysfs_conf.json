@@ -44,9 +44,15 @@
     },
     {
       "path": "/sys/switch/fpga",
-      "type" : "path",
+      "type" : "elem",
       "value" : "/sys/s3ip/fpga",
       "description": "FPGA信息"
+    },
+    {
+      "path": "/sys/switch/fpga",
+      "type" : "elem",
+      "value" : "/sys/s3ip/reboot_eeprom",
+      "description": "REBOOT信息"
     },
     {
       "path": "/sys/switch/cpld",

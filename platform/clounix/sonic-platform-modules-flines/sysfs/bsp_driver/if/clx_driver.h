@@ -32,6 +32,7 @@ typedef enum {
 	CLX_DRIVER_TYPES_VOL,
 	CLX_DRIVER_TYPES_WATCHDOG,
 	CLX_DRIVER_TYPES_SYSLED,
+	CLX_DRIVER_TYPES_REBOOT_EEPROM,
 	CLX_DRIVER_TYPES_MAX,
 }driver_types_t;
 
@@ -65,7 +66,9 @@ struct bd_common {
 struct bd_syseeprom {
 	char name[BOARD_NAME_LEN];
 };
-
+struct bd_reboot_eeprom {
+	char name[BOARD_NAME_LEN];
+};
 struct bd_fan {
 	char name[BOARD_NAME_LEN];
 };
@@ -109,6 +112,7 @@ struct bd_watchdog {
 struct board_info {
 	struct bd_common common;
 	struct bd_syseeprom syse2p;
+	struct bd_reboot_eeprom reboote2p;
 	struct bd_fan fan;
 	struct bd_cpld cpld;
 	struct bd_sysled sysled;

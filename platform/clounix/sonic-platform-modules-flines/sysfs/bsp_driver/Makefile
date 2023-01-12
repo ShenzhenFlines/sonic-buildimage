@@ -30,6 +30,11 @@ syseeprom_dev_driver-objs := syseeprom_device_driver.o \
 			$(INTERFACE_DIR)/syseeprom_interface.o \
 			$(CLX_DRIVER_DIR)/syseeprom_driver_clx8000.o
 
+obj-m += reboot_eeprom_dev_driver.o
+reboot_eeprom_dev_driver-objs := reboot_eeprom_device_driver.o \
+			$(INTERFACE_DIR)/reboot_eeprom_interface.o \
+			$(CLX_DRIVER_DIR)/reboot_eeprom_driver_clx8000.o
+
 obj-m += fan_dev_driver.o
 fan_dev_driver-objs := fan_device_driver.o \
 			$(INTERFACE_DIR)/fan_interface.o \

@@ -5,7 +5,7 @@
 //extern clx_driver_initcall_t __stop_drv_initcalls;
 struct board_info prod_bd;
 
-int g_dev_loglevel[CLX_DRIVER_TYPES_MAX] = {0, 0, 0, 0, 0, 0, 0 ,0, 0, 0};
+int g_dev_loglevel[CLX_DRIVER_TYPES_MAX] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
 EXPORT_SYMBOL_GPL(g_dev_loglevel);
 
 struct board_info *clx_driver_get_platform_bd(void)
@@ -37,6 +37,13 @@ static char *clx_driver_syseeprom_get_type(char *platform)
 {
 	struct board_info *bd = clx_driver_get_platform_bd();
 	return bd->syse2p.name;
+}
+
+//7xx/fpga/type "DRIVERA"
+static char *clx_driver_reboot_eeprom_get_type(char *platform)
+{
+	struct board_info *bd = clx_driver_get_platform_bd();
+	return bd->reboote2p.name;
 }
 
 //7xx/fpga/type "DRIVERA"
@@ -133,6 +140,9 @@ char *clx_driver_identify(driver_types_t driver_type)
 			break;
 		case CLX_DRIVER_TYPES_PSU:
 			driver = clx_driver_psu_get_type(platform);
+			break;
+		case CLX_DRIVER_TYPES_REBOOT_EEPROM:
+			driver = clx_driver_reboot_eeprom_get_type(platform);
 			break;																							
 		default:
 			break;
@@ -145,6 +155,7 @@ static int clx_driver_clx8000_board(void)
 {
 	struct board_info *bd = clx_driver_get_platform_bd();
 	char syse2p_name[] = "syseeprom_clx8000";	
+	char reboote2p_name[] = "reboot_eeprom_clx8000";
 	char cpld_name[] = "cpld_clx8000";
 	char fpga_name[] = "fpga_clx8000";
 	char xcvr_name[] = "xcvr_clx8000";
@@ -158,6 +169,8 @@ static int clx_driver_clx8000_board(void)
 
 	//syseeprom info
 	memcpy(bd->syse2p.name, syse2p_name, sizeof(syse2p_name));
+	//reboot eeprom info
+	memcpy(bd->reboote2p.name, reboote2p_name, sizeof(reboote2p_name));
 	//CPLD info
 	memcpy(bd->cpld.name, cpld_name, sizeof(cpld_name));
 	//FPGA info
@@ -178,7 +191,6 @@ static int clx_driver_clx8000_board(void)
 	memcpy(bd->curr.name, curr_name, sizeof(curr_name));
 	//sysled info
 	memcpy(bd->vol.name, vol_name, sizeof(vol_name));
-	printk(KERN_INFO "syseeprom_if_create_driver\n");
 
 	return 0;
 }
