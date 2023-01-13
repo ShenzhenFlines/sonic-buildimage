@@ -10,6 +10,4 @@
 #define CLX_FAN_BUS 6
 #define CLX_FAN_ADDR 0x60
 
-#define CLX_FAN_BUS 6
-#define CLX_FAN_ADDR 0x60
 #endif //_CLX_DRIVER_COMMON_H_

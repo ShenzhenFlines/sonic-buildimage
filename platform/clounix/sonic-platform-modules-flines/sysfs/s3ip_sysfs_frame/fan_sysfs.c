@@ -41,6 +41,8 @@ struct fan_obj_s {
     unsigned int motor_number;
     struct motor_obj_s *motor;
     struct switch_obj *obj;
+    struct bin_attribute bin;
+    int fan_creat_bin_flag;
 };
 
 struct fan_s {
@@ -462,6 +464,57 @@ ssize_t fan_direction_show(struct switch_obj *obj, struct switch_attribute *attr
     return ret;
 }
 
+static ssize_t fan_eeprom_read(struct file *filp, struct kobject *kobj, struct bin_attribute *attr,
+                   char *buf, loff_t offset, size_t count)
+{
+    struct switch_obj *fan_obj;
+    ssize_t rd_len;
+    unsigned int fan_index;
+
+    check_p(g_fan_drv);
+    check_p(g_fan_drv->read_fan_eeprom_data);
+
+    fan_obj = to_switch_obj(kobj);
+    fan_index = fan_obj->index;
+    memset(buf, 0, count);
+    rd_len = g_fan_drv->read_fan_eeprom_data(fan_index, buf, offset, count);
+    if (rd_len < 0) {
+        FAN_ERR("read fan%u eeprom data error, offset: 0x%llx, read len: %lu, ret: %ld.\n",
+            fan_index, offset, count, rd_len);
+        return -EIO;
+    }
+
+    FAN_DBG("read fan%u eeprom data success, offset:0x%llx, read len:%lu, really read len:%ld.\n",
+        fan_index, offset, count, rd_len);
+
+    return rd_len;
+}
+
+static ssize_t fan_eeprom_write(struct file *filp, struct kobject *kobj, struct bin_attribute *attr,
+                   char *buf, loff_t offset, size_t count)
+{
+    struct switch_obj *fan_obj;
+    ssize_t wr_len;
+    unsigned int fan_index;
+
+    check_p(g_fan_drv);
+    check_p(g_fan_drv->write_fan_eeprom_data);
+
+    fan_obj = to_switch_obj(kobj);
+    fan_index = fan_obj->index;
+    wr_len = g_fan_drv->write_fan_eeprom_data(fan_index, buf, offset, count);
+    if (wr_len < 0) {
+        FAN_ERR("write fan%u eeprom data error, offset: 0x%llx, read len: %lu, ret: %ld.\n",
+            fan_index, offset, count, wr_len);
+        return -EIO;
+    }
+
+    FAN_DBG("write fan%u eeprom data success, offset:0x%llx, write len:%lu, really write len:%ld.\n",
+        fan_index, offset, count, wr_len);
+
+    return wr_len;
+}
+
 /************************************fan dir and attrs*******************************************/
 static struct switch_attribute fan_number_attr = __ATTR(num, S_IRUGO, fan_number_show, NULL);
 static struct switch_attribute fan_debug_attr = __ATTR(debug, S_IRUGO | S_IWUSR, fan_debug_show, fan_debug_store);
@@ -527,6 +580,55 @@ static struct attribute *motor_attrs[] = {
 static struct attribute_group motor_attr_group = {
     .attrs = motor_attrs,
 };
+
+/* create fan* eeprom attributes */
+static int fan_sub_single_create_eeprom_attrs(unsigned int index)
+{
+    int ret, eeprom_size;
+    struct fan_obj_s *curr_fan;
+
+    check_p(g_fan_drv->get_fan_eeprom_size);
+    eeprom_size = g_fan_drv->get_fan_eeprom_size(index);
+    if (eeprom_size <= 0) {
+        FAN_INFO("fan%u, eeprom_size: %d, don't need to creat eeprom attr.\n",index, eeprom_size);
+        return 0;
+    }
+
+    curr_fan = &g_fan.fan[index - 1];
+    sysfs_bin_attr_init(&curr_fan->bin);
+    curr_fan->bin.attr.name = "eeprom";
+    curr_fan->bin.attr.mode = 0644;
+    curr_fan->bin.read = fan_eeprom_read;
+    curr_fan->bin.write = fan_eeprom_write;
+    curr_fan->bin.size = eeprom_size;
+
+    ret = sysfs_create_bin_file(&curr_fan->obj->kobj, &curr_fan->bin);
+    if (ret) {
+        FAN_ERR("fan%u, create eeprom bin error, ret: %d. \n", index, ret);
+        return -EBADRQC;
+    }
+
+    FAN_DBG("fan%u, create bin file success, eeprom size:%d.\n", index, eeprom_size);
+    curr_fan->fan_creat_bin_flag = 1;
+
+    return 0;
+}
+/* remove fan eeprom directory and attributes */
+static void fan_sub_single_remove_eeprom_attrs(unsigned int index)
+{
+    struct fan_obj_s *curr_fan;
+
+    curr_fan = &g_fan.fan[index - 1];
+
+    if (curr_fan->obj) {
+        if (curr_fan->fan_creat_bin_flag) {
+            sysfs_remove_bin_file(&curr_fan->obj->kobj, &curr_fan->bin);
+            curr_fan->fan_creat_bin_flag = 0;
+        }
+    }
+
+    return;
+}
 
 static void fanindex_single_motor_remove_kobj_and_attrs(struct fan_obj_s *curr_fan, unsigned int motor_index)
 {
@@ -667,6 +769,8 @@ static int fan_sub_single_remove_kobj_and_attrs(unsigned int index)
 {
     struct fan_obj_s *curr_fan;
 
+    fan_sub_single_remove_eeprom_attrs(index);
+
     curr_fan = &g_fan.fan[index - 1];
     if (curr_fan->obj) {
         sysfs_remove_group(&curr_fan->obj->kobj, &fan_attr_group);
@@ -696,7 +800,11 @@ static int fan_sub_single_create_kobj_and_attrs(struct kobject *parent, unsigned
         switch_kobject_delete(&curr_fan->obj);
         return -EBADRQC;
     }
+    
     FAN_DBG("create %s dir and attrs success.\n", name);
+
+    fan_sub_single_create_eeprom_attrs(index);
+
     return 0;
 }
 

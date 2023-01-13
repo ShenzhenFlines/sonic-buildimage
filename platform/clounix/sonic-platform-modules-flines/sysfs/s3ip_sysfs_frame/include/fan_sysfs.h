@@ -24,6 +24,10 @@ struct s3ip_sysfs_fan_drivers_s {
     ssize_t (*get_fan_motor_speed_min)(unsigned int fan_index, unsigned int motor_index, char *buf, size_t count);
     ssize_t (*get_fan_motor_ratio)(unsigned int fan_index, unsigned int motor_index, char *buf, size_t count);
     int (*set_fan_motor_ratio)(unsigned int fan_index, unsigned int motor_index, int ratio);
+    int (*get_fan_eeprom_size)(unsigned int fan_index);
+    ssize_t (*read_fan_eeprom_data)(unsigned int fan_index, char *buf, loff_t offset, size_t count);
+    ssize_t (*write_fan_eeprom_data)(unsigned int fan_index, char *buf, loff_t offset, size_t count);
+
 };
 
 extern int s3ip_sysfs_fan_drivers_register(struct s3ip_sysfs_fan_drivers_s *drv);

@@ -428,6 +428,85 @@ static int clx_set_fan_motor_ratio(unsigned int fan_index, unsigned int motor_in
     FAN_INDEX_MAPPING(fan_index);
     return fan_dev->set_fan_motor_ratio(fan_dev, fan_index, motor_index, ratio);
 }
+
+/*
+ * clx_get_fan_eeprom_size - Used to get port eeprom size
+ *
+ * This function returns the size of fan eeprom,
+ * otherwise it returns a negative value on failed.
+ */
+static int clx_get_fan_eeprom_size(unsigned int fan_index)
+{
+    int ret;
+    struct fan_fn_if *fan_dev = get_fan();
+
+    FAN_DEV_VALID(fan_dev);
+    FAN_DEV_VALID(fan_dev->get_fan_eeprom_size);
+    FAN_INDEX_MAPPING(fan_index);
+    ret = fan_dev->get_fan_eeprom_size(fan_dev, fan_index);
+    if (ret < 0)
+    {
+        return -ENOSYS;
+    }
+
+    return ret;
+}
+
+/*
+ * clx_read_fan_eeprom_data - Used to read fan eeprom data,
+ * @buf: Data read buffer
+ * @offset: offset address to read fan eeprom data
+ * @count: length of buf
+ *
+ * This function returns the length of the filled buffer,
+ * returns 0 means EOF,
+ * otherwise it returns a negative value on failed.
+ */
+static ssize_t clx_read_fan_eeprom_data(unsigned int fan_index, char *buf, loff_t offset,
+                   size_t count)
+{
+    int ret;
+    struct fan_fn_if *fan_dev = get_fan();
+
+    FAN_DEV_VALID(fan_dev);
+    FAN_DEV_VALID(fan_dev->read_fan_eeprom_data);
+    FAN_INDEX_MAPPING(fan_index);
+    ret = fan_dev->read_fan_eeprom_data(fan_dev, fan_index, buf, offset, count);
+    if (ret < 0)
+    {
+        return -ENOSYS;
+    }
+
+    return ret;
+}
+
+/*
+ * clx_write_fan_eeprom_data - Used to write fan eeprom data
+ * @buf: Data write buffer
+ * @offset: offset address to write fan eeprom data
+ * @count: length of buf
+ *
+ * This function returns the written length of port eeprom,
+ * returns 0 means EOF,
+ * otherwise it returns a negative value on failed.
+ */
+static ssize_t clx_write_fan_eeprom_data(unsigned int fan_index, char *buf, loff_t offset,
+                   size_t count)
+{
+    int ret;
+    struct fan_fn_if *fan_dev = get_fan();
+
+    FAN_DEV_VALID(fan_dev);
+    FAN_DEV_VALID(fan_dev->write_fan_eeprom_data);
+    FAN_INDEX_MAPPING(fan_index);
+    ret = fan_dev->write_fan_eeprom_data(fan_dev, fan_index, buf, offset, count);
+    if (ret < 0)
+    {
+        return -ENOSYS;
+    }
+
+    return ret;
+}
 /****************************************end of fan*******************************************/
 
 static struct s3ip_sysfs_fan_drivers_s drivers = {
@@ -457,6 +536,9 @@ static struct s3ip_sysfs_fan_drivers_s drivers = {
     .get_fan_motor_speed_min = clx_get_fan_motor_speed_min,
     .get_fan_motor_ratio = clx_get_fan_motor_ratio,
     .set_fan_motor_ratio = clx_set_fan_motor_ratio,
+    .get_fan_eeprom_size = clx_get_fan_eeprom_size,
+    .read_fan_eeprom_data = clx_read_fan_eeprom_data,
+    .write_fan_eeprom_data = clx_write_fan_eeprom_data,
 };
 
 static int __init fan_dev_drv_init(void)

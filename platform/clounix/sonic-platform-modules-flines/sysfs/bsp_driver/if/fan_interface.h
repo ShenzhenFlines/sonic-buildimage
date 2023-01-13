@@ -25,6 +25,9 @@ struct fan_fn_if {
     ssize_t (*get_fan_motor_speed_min)(void *driver, unsigned int fan_index, unsigned int motor_index, char *buf, size_t count);
     ssize_t (*get_fan_motor_ratio)(void *driver, unsigned int fan_index, unsigned int motor_index, char *buf, size_t count);
     int (*set_fan_motor_ratio)(void *driver, unsigned int fan_index, unsigned int motor_index, int ratio);
+    int (*get_fan_eeprom_size)(void * driver, unsigned int fan_index);
+    ssize_t (*read_fan_eeprom_data)(void * driver, unsigned int fan_index, char *buf, loff_t offset, size_t count);
+    ssize_t (*write_fan_eeprom_data)(void * driver, unsigned int fan_index, char *buf, loff_t offset, size_t count);
 };
 
 #define FAN_DEV_VALID(dev) \

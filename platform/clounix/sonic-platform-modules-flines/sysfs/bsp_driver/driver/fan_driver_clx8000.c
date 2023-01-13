@@ -18,6 +18,147 @@ static u8 led_state_user_to_dev[] = { DEV_FAN_LED_DARK, DEV_FAN_LED_GREEN, DEV_F
 USER_FAN_LED_NOT_SUPPORT, USER_FAN_LED_NOT_SUPPORT, USER_FAN_LED_NOT_SUPPORT, USER_FAN_LED_NOT_SUPPORT };
 static u8 led_state_dev_to_user[] = { USER_FAN_LED_DARK, USER_FAN_LED_GREEN, USER_FAN_LED_RED, USER_FAN_LED_YELLOW };
 
+static int fan_eeprom_wait_bus_tx_done(struct fan_driver_clx8000 *driver)
+{
+    unsigned char val = 0;
+    unsigned char reg = 0;
+    unsigned long timeout = jiffies + FAN_EEPROM_I2C_TIMEOUT;
+
+    do
+    {
+        val = 0;
+        reg = FAN_EEPROM_IIC_STATUS_OFFSET;
+        clx_i2c_read(driver->bus, driver->addr, reg, &val, 1);
+        if (val & FAN_EEPROM_TX_FINISH_MASK)
+        {
+            if (val & FAN_EEPROM_TX_ERROR_MASK)
+            {
+                FAN_DBG("fan_eeprom_wait_bus_tx_done data ECOMM error\r\n");
+                return -ECOMM;
+            }
+
+            return 0;
+        }
+
+    } while (time_before(jiffies, timeout));
+
+    FAN_DBG("fan_eeprom_wait_bus_tx_done data ETIMEDOUT error\r\n");
+
+    return -ETIMEDOUT;
+}
+static ssize_t clx_driver_clx8000_write_fan_eeprom(struct fan_driver_clx8000 *driver, unsigned int fan_index, char *buf, loff_t offset, size_t len)
+{
+    unsigned char val = 0;
+    unsigned char reg = 0;
+    unsigned int i = 0;
+
+    if(len > FAN_EEPROM_SIZE)
+    {
+        return -EMSGSIZE;
+    }
+    if(fan_index >= FAN_CLX8000_MAX)
+    {
+        return -EMSGSIZE;
+    }
+
+    val = fan_index;
+    reg = FAN_EEPROM_SELECT_OFFSET;
+    clx_i2c_write(driver->bus, driver->addr, reg, &val, 1);
+
+    val = 0x01;
+    reg = FAN_EEPROM_DATA_SIZE_OFFSET;
+    clx_i2c_write(driver->bus, driver->addr, reg, &val, 1); 
+
+    val = 0x04;
+    reg = FAN_EEPROM_IIC_MAGE_OFFSET;
+    clx_i2c_write(driver->bus, driver->addr, reg, &val, 1); 
+
+    FAN_DBG("clx_driver_clx8000_write_fan_eeprom len = %d\r\n",len);
+
+    for (i = 0; i < len; i++)
+    {
+        val = (offset + i);
+        reg = FAN_EEPROM_IIC_REG_OFFSET;
+        clx_i2c_write(driver->bus, driver->addr, reg, &val, 1); 
+
+        val = buf[i];
+        reg = FAN_EEPROM_BYTE_WRITE_OFFSET;
+        clx_i2c_write(driver->bus, driver->addr, reg, &val, 1); 
+        
+        //FAN_DBG("clx_driver_clx8000_write_fan_eeprom i = %d ,data = 0x%x\r\n",i,val);
+
+        val = 0x80;
+        reg = FAN_EEPROM_IIC_START_OFFSET;
+        clx_i2c_write(driver->bus, driver->addr, reg, &val, 1); 
+
+        if (fan_eeprom_wait_bus_tx_done(driver) != 0)
+        {
+            return -ETIMEDOUT;
+        }
+
+        usleep_range(5000, 6000);
+    }
+
+    return len;
+}
+
+static ssize_t clx_driver_clx8000_read_fan_eeprom(struct fan_driver_clx8000 *driver, unsigned int fan_index, char *buf, loff_t offset, size_t len)
+{
+    unsigned char val = 0;
+    unsigned char reg = 0;
+    unsigned int i = 0;
+
+    if(len > FAN_EEPROM_SIZE)
+    {
+        return -EMSGSIZE;
+    }
+
+    if(fan_index >= FAN_CLX8000_MAX)
+    {
+        return -EMSGSIZE;
+    }
+
+    val = fan_index;
+    reg = FAN_EEPROM_SELECT_OFFSET;
+    clx_i2c_write(driver->bus, driver->addr, reg, &val, 1);
+
+    val = 0x01;
+    reg = FAN_EEPROM_DATA_SIZE_OFFSET;
+    clx_i2c_write(driver->bus, driver->addr, reg, &val, 1); 
+
+    val = 0x01;
+    reg = FAN_EEPROM_IIC_MAGE_OFFSET;
+    clx_i2c_write(driver->bus, driver->addr, reg, &val, 1);
+
+    //FAN_DBG("clx_driver_clx8000_read_fan_eeprom len = %d\r\n",len);
+
+    for ( i = 0; i < len; i++ )
+    {
+        val = (offset + i);
+        reg = FAN_EEPROM_IIC_REG_OFFSET;
+        clx_i2c_write(driver->bus, driver->addr, reg, &val, 1); 
+
+        val = 0x80;
+        reg = FAN_EEPROM_IIC_START_OFFSET;
+        clx_i2c_write(driver->bus, driver->addr, reg, &val, 1);
+
+        if (fan_eeprom_wait_bus_tx_done(driver) != 0)
+        {
+            return -ETIMEDOUT;
+        }
+        else
+        {
+            val = 0;
+            reg = FAN_EEPROM_BYTE_READ_OFFSET;
+            clx_i2c_read(driver->bus, driver->addr, reg, &val, 1); 
+            buf[i] = val;
+            FAN_DBG("clx_driver_clx8000_read_fan_eeprom i = %d ,buf = 0x%x\r\n",i,buf[i]);
+        }
+    } 
+
+    return len;  
+}
+
 
 static int clx_driver_clx8000_get_fan_number(void *fan)
 {
@@ -399,6 +540,55 @@ static int clx_driver_clx8000_set_fan_motor_ratio(void *fan, unsigned int fan_in
     return DRIVER_OK;
 }
 
+/*
+ * clx_driver_clx8000_get_fan_eeprom_size - Used to get fan eeprom size
+ *
+ * This function returns the size of fan eeprom,
+ * otherwise it returns a negative value on failed.
+ */
+static int clx_driver_clx8000_get_fan_eeprom_size(void *fan, unsigned int fan_index)
+{
+    return FAN_EEPROM_SIZE;
+}
+
+/*
+ * clx_driver_clx8000_read_fan_eeprom_data - Used to read fan eeprom data,
+ * @buf: Data read buffer
+ * @offset: offset address to read fan eeprom data
+ * @count: length of buf
+ *
+ * This function returns the length of the filled buffer,
+ * returns 0 means EOF,
+ * otherwise it returns a negative value on failed.
+ */
+static ssize_t clx_driver_clx8000_read_fan_eeprom_data(void *fan, unsigned int fan_index, char *buf, loff_t offset,
+                   size_t count)
+{
+    struct fan_driver_clx8000 *dev = (struct fan_driver_clx8000 *)fan;
+
+    return clx_driver_clx8000_read_fan_eeprom(dev, fan_index, buf, offset, count);
+   
+}
+
+/*
+ * clx_driver_clx8000_write_fan_eeprom_data - Used to write fan eeprom data
+ * @buf: Data write buffer
+ * @offset: offset address to write fan eeprom data
+ * @count: length of buf
+ *
+ * This function returns the written length of fan eeprom,
+ * returns 0 means EOF,
+ * otherwise it returns a negative value on failed.
+ */
+static ssize_t clx_driver_clx8000_write_fan_eeprom_data(void *fan, unsigned int fan_index, char *buf, loff_t offset,
+                   size_t count)
+{
+    struct fan_driver_clx8000 *dev = (struct fan_driver_clx8000 *)fan;
+
+    return clx_driver_clx8000_write_fan_eeprom(dev, fan_index, buf, offset, count);
+
+}
+
 static int clx_driver_clx8000_fan_dev_init(struct fan_driver_clx8000 *fan)
 {
     if (clounix_fpga_base == NULL) {
@@ -436,6 +626,9 @@ void clx_driver_clx8000_fan_init(void **fan_driver)
     fan->fan_if.get_fan_motor_speed_min = clx_driver_clx8000_get_fan_motor_speed_min;
     fan->fan_if.get_fan_motor_ratio = clx_driver_clx8000_get_fan_motor_ratio;
     fan->fan_if.set_fan_motor_ratio = clx_driver_clx8000_set_fan_motor_ratio;
+    fan->fan_if.get_fan_eeprom_size = clx_driver_clx8000_get_fan_eeprom_size;
+    fan->fan_if.read_fan_eeprom_data = clx_driver_clx8000_read_fan_eeprom_data;
+    fan->fan_if.write_fan_eeprom_data = clx_driver_clx8000_write_fan_eeprom_data;
     fan->fan_num = FAN_CLX8000_MAX;
     fan->motor_per_fan = MOTOR_NUM_PER_FAN;
     fan->bus = CLX_FAN_BUS;
