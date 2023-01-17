@@ -407,6 +407,31 @@ static ssize_t clx_get_eth_low_power_mode_status(unsigned int eth_index, char *b
 }
 
 /*
+ * clx_set_eth_low_power_mode_status - Used to set port low power mode status,
+ * @eth_index: start with 1
+ * @status: low power mode status, 0: low power mode, 1: high power mode
+ *
+ * This function returns 0 on success,
+ * otherwise it returns a negative value on failed.
+ */
+static int clx_set_eth_low_power_mode_status(unsigned int eth_index, int status)
+{
+    int ret;
+    struct xcvr_fn_if *xcvr_dev = get_xcvr();
+
+    XCVR_DEV_VALID(xcvr_dev);
+    XCVR_DEV_VALID(xcvr_dev->set_eth_low_power_mode_status);
+    XCVR_ETH_INDEX_MAPPING(eth_index);
+    ret = xcvr_dev->set_eth_low_power_mode_status(xcvr_dev, eth_index, status);
+    if (ret < 0)
+    {
+        return -ENOSYS;
+    }
+
+    return ret;
+}
+
+/*
  * clx_get_eth_interrupt_status - Used to get port interruption status,
  * filled the value to buf, 0: no interruption, 1: interruption
  * @eth_index: start with 1
@@ -537,6 +562,7 @@ static struct s3ip_sysfs_transceiver_drivers_s drivers = {
     .get_eth_reset_status = clx_get_eth_reset_status,
     .set_eth_reset_status = clx_set_eth_reset_status,
     .get_eth_low_power_mode_status = clx_get_eth_low_power_mode_status,
+    .set_eth_low_power_mode_status = clx_set_eth_low_power_mode_status,
     .get_eth_interrupt_status = clx_get_eth_interrupt_status,
     .get_eth_eeprom_size = clx_get_eth_eeprom_size,
     .read_eth_eeprom_data = clx_read_eth_eeprom_data,

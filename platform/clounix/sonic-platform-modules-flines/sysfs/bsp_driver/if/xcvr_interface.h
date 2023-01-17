@@ -21,6 +21,7 @@ struct xcvr_fn_if {
     ssize_t (*get_eth_reset_status)(void * driver, unsigned int eth_index, char *buf, size_t count);
     int (*set_eth_reset_status)(void * driver, unsigned int eth_index, int status);
     ssize_t (*get_eth_low_power_mode_status)(void * driver, unsigned int eth_index, char *buf, size_t count);
+    int (*set_eth_low_power_mode_status)(void * driver, unsigned int eth_index, int status);
     ssize_t (*get_eth_interrupt_status)(void * driver, unsigned int eth_index, char *buf, size_t count);
     int (*get_eth_eeprom_size)(void * driver, unsigned int eth_index);
     ssize_t (*read_eth_eeprom_data)(void * driver, unsigned int eth_index, char *buf, loff_t offset, size_t count);

@@ -372,6 +372,31 @@ static ssize_t eth_low_power_mode_show(struct switch_obj *obj, struct switch_att
     return ret;
 }
 
+static ssize_t eth_low_power_mode_store(struct switch_obj *obj, struct switch_attribute *attr,
+                   const char* buf, size_t count)
+{
+    unsigned int eth_index;
+    int ret, value;
+
+    check_p(g_sff_drv);
+    check_p(g_sff_drv->set_eth_low_power_mode_status);
+
+    sscanf(buf, "%d", &value);
+    eth_index = obj->index;
+    if (value < 0 || value > 1) {
+        SFF_ERR("invalid value: %d, can't set eth%u low power mode status.\n", value, eth_index);
+        return -EINVAL;
+    }
+
+    ret = g_sff_drv->set_eth_low_power_mode_status(eth_index, value);
+    if (ret < 0) {
+        SFF_ERR("set eth%u low power mode status %d failed, ret: %d\n", eth_index, value, ret);
+        return -EIO;
+    }
+    SFF_DBG("set eth%u low power mode status %d success\n", eth_index, value);
+    return count;
+}
+
 static ssize_t eth_interrupt_show(struct switch_obj *obj, struct switch_attribute *attr, char *buf)
 {
     unsigned int eth_index;
@@ -448,7 +473,7 @@ static struct switch_attribute eth_tx_disable_attr = __ATTR(tx_disable, S_IRUGO 
 static struct switch_attribute eth_present_attr = __ATTR(present, S_IRUGO, eth_present_show, NULL);
 static struct switch_attribute eth_rx_los_attr = __ATTR(rx_los, S_IRUGO, eth_rx_los_show, NULL);
 static struct switch_attribute eth_reset_attr = __ATTR(reset, S_IRUGO | S_IWUSR, eth_reset_show, eth_reset_store);
-static struct switch_attribute eth_low_power_mode_attr = __ATTR(low_power_mode, S_IRUGO, eth_low_power_mode_show, NULL);
+static struct switch_attribute eth_low_power_mode_attr = __ATTR(low_power_mode, S_IRUGO | S_IWUSR, eth_low_power_mode_show, eth_low_power_mode_store);
 static struct switch_attribute eth_interrupt_attr = __ATTR(interrupt, S_IRUGO, eth_interrupt_show, NULL);
 
 static struct attribute *sff_signal_attrs[] = {

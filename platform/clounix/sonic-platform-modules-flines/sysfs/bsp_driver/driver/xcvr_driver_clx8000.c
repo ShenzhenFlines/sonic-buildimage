@@ -1099,6 +1099,71 @@ static ssize_t clx_driver_clx8000_get_eth_low_power_mode_status(void *xcvr, unsi
 }
 
 /*
+ * clx_driver_clx8000_set_eth_low_power_mode_status - Used to set port low power mode status,
+ * @eth_index: start with 0
+ * @status: low power mode status, 0: low power mode, 1: high power mode
+ *
+ * This function returns 0 on success,
+ * otherwise it returns a negative value on failed.
+ */
+static int clx_driver_clx8000_set_eth_low_power_mode_status(void *xcvr, unsigned int eth_index, int status)
+{
+    uint32_t data = 0;
+    struct clounix_priv_data *sfp = &(((struct xcvr_driver_clx8000 *)xcvr)->dev);
+
+    if(0x1 == status)
+    {
+        if(eth_index < 30) 
+        {
+            data = fpga_reg_read(sfp, QSFP_CPLD0_LPW__CONFIG_ADDRESS);
+            //pega_print(DEBUG, "reg: %x, data: %x\r\n", QSFP_CONFIG_ADDRESS_BASE, data);
+            CLEAR_BIT(data, (eth_index - QSFP_CPLD0_LPW_START_PORT + QSFP_CPLD0_LPW__CONFIG_OFFSET));
+            fpga_reg_write(sfp, QSFP_CPLD0_LPW__CONFIG_ADDRESS, data);
+        }
+        else if(eth_index <= 47)
+        {
+            data = fpga_reg_read(sfp, QSFP_CPLD1_LPW__CONFIG_ADDRESS);
+            //pega_print(DEBUG, "reg: %x, data: %x\r\n", QSFP_CONFIG_ADDRESS_BASE, data);
+            CLEAR_BIT(data, (eth_index - QSFP_CPLD1_LPW_START_PORT + QSFP_CPLD1_LPW__CONFIG_OFFSET));
+            fpga_reg_write(sfp, QSFP_CPLD1_LPW__CONFIG_ADDRESS, data);
+        }
+        else 
+        {
+            data = fpga_reg_read(sfp, QSFP_CONFIG_ADDRESS_BASE);
+            //pega_print(DEBUG, "reg: %x, data: %x\r\n", QSFP_CONFIG_ADDRESS_BASE, data);
+            CLEAR_BIT(data, (eth_index - QSFP_START_PORT + QSFP_CONFIG_POWER_MODE_OFFSET));
+            fpga_reg_write(sfp, QSFP_CONFIG_ADDRESS_BASE, data);
+        }
+    }
+    else
+    {
+        if(eth_index < 30) 
+        {
+            data = fpga_reg_read(sfp, QSFP_CPLD0_LPW__CONFIG_ADDRESS);
+            //pega_print(DEBUG, "reg: %x, data: %x\r\n", QSFP_CONFIG_ADDRESS_BASE, data);
+            SET_BIT(data, (eth_index - QSFP_CPLD0_LPW_START_PORT + QSFP_CPLD0_LPW__CONFIG_OFFSET));
+            fpga_reg_write(sfp, QSFP_CPLD0_LPW__CONFIG_ADDRESS, data);
+        }
+        else if(eth_index <= 47)
+        {
+            data = fpga_reg_read(sfp, QSFP_CPLD1_LPW__CONFIG_ADDRESS);
+            //pega_print(DEBUG, "reg: %x, data: %x\r\n", QSFP_CONFIG_ADDRESS_BASE, data);
+            SET_BIT(data, (eth_index - QSFP_CPLD1_LPW_START_PORT + QSFP_CPLD1_LPW__CONFIG_OFFSET));
+            fpga_reg_write(sfp, QSFP_CPLD1_LPW__CONFIG_ADDRESS, data);
+        }
+        else 
+        {
+            data = fpga_reg_read(sfp, QSFP_CONFIG_ADDRESS_BASE);
+            //pega_print(DEBUG, "reg: %x, data: %x\r\n", QSFP_CONFIG_ADDRESS_BASE, data);
+            SET_BIT(data, (eth_index - QSFP_START_PORT + QSFP_CONFIG_POWER_MODE_OFFSET));
+            fpga_reg_write(sfp, QSFP_CONFIG_ADDRESS_BASE, data);
+        }
+    }
+ 
+    return 0;
+}
+
+/*
  * clx_driver_clx8000_get_eth_interrupt_status - Used to get port interruption status,
  * filled the value to buf, 0: no interruption, 1: interruption
  * @eth_index: start with 0
@@ -1216,6 +1281,7 @@ void clx_driver_clx8000_xcvr_init(void **xcvr_driver)
      xcvr->xcvr_if.get_eth_reset_status = clx_driver_clx8000_get_eth_reset_status;
      xcvr->xcvr_if.set_eth_reset_status = clx_driver_clx8000_set_eth_reset_status;
      xcvr->xcvr_if.get_eth_low_power_mode_status = clx_driver_clx8000_get_eth_low_power_mode_status;
+     xcvr->xcvr_if.set_eth_low_power_mode_status = clx_driver_clx8000_set_eth_low_power_mode_status;
      xcvr->xcvr_if.get_eth_interrupt_status = clx_driver_clx8000_get_eth_interrupt_status;
      xcvr->xcvr_if.get_eth_eeprom_size = clx_driver_clx8000_get_eth_eeprom_size;
      xcvr->xcvr_if.read_eth_eeprom_data = clx_driver_clx8000_read_eth_eeprom_data;
