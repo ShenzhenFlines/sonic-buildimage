@@ -33,6 +33,7 @@ SFP_STATUS_REMOVED = '0'
 REBOOT_CAUSE_FILE = "/host/reboot-cause/reboot-cause.txt"
 THERMAL_OVERLOAD_POSITION_FILE = "/host/reboot-cause/platform/thermal_overload_position"
 ADDITIONAL_FAULT_CAUSE_FILE = "/host/reboot-cause/platform/additional_fault_cause"
+REBOOT_EEPROM_PATH = "/sys/switch/fpga/reboot_cause"
 
 class Chassis(ChassisBase):
     _cpld_list = []
@@ -294,38 +295,59 @@ class Chassis(ChassisBase):
             is "REBOOT_CAUSE_HARDWARE_OTHER", the second string can be used
             to pass a description of the reboot cause.
         """
-        description = 'Unknown'
-        reboot_cause = self.REBOOT_CAUSE_NON_HARDWARE
-        thermal_overload_pos = 'None'
-        hw_reboot_cause = 'Unknown'
-        sw_reboot_cause = 'Unknown'
+        reboot_cause = (self.REBOOT_CAUSE_NON_HARDWARE, "Unknown")
 
-        #reservered for hardware reboot cause
-        if hw_reboot_cause != 'Unknown':
-            reboot_cause = self.REBOOT_CAUSE_HARDWARE_OTHER
+        binfile = open(REBOOT_EEPROM_PATH, 'wb+')
+        hw_reboot_cause = binfile.read(1).hex()
+        binfile.seek(0)
+        binfile.write(bytes([0]))
+        binfile.close()
+        reboot_cause = {
+            '00': (self.REBOOT_CAUSE_NON_HARDWARE, 'Non-Hardware'),
+            '01': (self.REBOOT_CAUSE_POWER_LOSS, 'Power Loss'),
+            '02': (self.REBOOT_CAUSE_THERMAL_OVERLOAD_CPU, 'Thermal Overload: CPU'),
+            '03': (self.REBOOT_CAUSE_THERMAL_OVERLOAD_ASIC, 'Thermal Overload: ASIC'),
+            '04': (self.REBOOT_CAUSE_THERMAL_OVERLOAD_OTHER, 'Thermal Overload: Other'),
+            '05': (self.REBOOT_CAUSE_INSUFFICIENT_FAN_SPEED, 'Insufficient Fan Speed'),
+            '06': (self.REBOOT_CAUSE_WATCHDOG, 'Watchdog'),
+            '07': (self.REBOOT_CAUSE_HARDWARE_OTHER, 'Hardware - Other'),
+            '08': (self.REBOOT_CAUSE_CPU_COLD_RESET, 'CPU Cold Reset'),
+            '09': (self.REBOOT_CAUSE_CPU_WARM_RESET, 'CPU Warm Reset'),
+            '10': (self.REBOOT_CAUSE_BIOS_RESET, 'BIOS Reset'),
+            '11': (self.REBOOT_CAUSE_PSU_SHUTDOWN, 'PSU Shutdown'),
+            '12': (self.REBOOT_CAUSE_BMC_SHUTDOWN, 'BMC Shutdown')
+        }.get(hw_reboot_cause, (self.REBOOT_CAUSE_HARDWARE_OTHER, 'Hardware - Other'))
+
+        sw_reboot_cause = self.__api_helper.read_one_line_file(REBOOT_CAUSE_FILE) or "Unknown"
+
+        #print("hw_reboot_cause %s" %(hw_reboot_cause))
+        #print("sw_reboot_cause %s" %(sw_reboot_cause))
+
+        if sw_reboot_cause != 'Unknown':
+            reboot_cause = (self.REBOOT_CAUSE_NON_HARDWARE, sw_reboot_cause)
+        #return prev_reboot_cause
+        #if hw_reboot_cause != 'Unknown':
+            #reboot_cause = self.REBOOT_CAUSE_HARDWARE_OTHER
 
         #software reboot cause
-        sw_reboot_cause = self.__api_helper.read_one_line_file(REBOOT_CAUSE_FILE) or "Unknown"
-        description = sw_reboot_cause
+        #sw_reboot_cause = self.__api_helper.read_one_line_file(REBOOT_CAUSE_FILE) or "Unknown"
+        #description = sw_reboot_cause
 
         #thermal policy reboot cause
         if os.path.isfile(THERMAL_OVERLOAD_POSITION_FILE):
             thermal_overload_pos = self.__api_helper.read_one_line_file(THERMAL_OVERLOAD_POSITION_FILE)
             if thermal_overload_pos is not "None":
-                reboot_cause = self.REBOOT_CAUSE_HARDWARE_OTHER
-                description = thermal_overload_pos
+                reboot_cause = (self.REBOOT_CAUSE_HARDWARE_OTHER, thermal_overload_pos)
                 os.remove(THERMAL_OVERLOAD_POSITION_FILE)
 
         if os.path.isfile(ADDITIONAL_FAULT_CAUSE_FILE):
             addational_fault_cause = self.__api_helper.read_one_line_file(ADDITIONAL_FAULT_CAUSE_FILE)
             if addational_fault_cause is not 'None':
                 description = ' '.join([description, addational_fault_cause])
+                reboot_cause = (self.REBOOT_CAUSE_HARDWARE_OTHER, description)
                 os.remove(ADDITIONAL_FAULT_CAUSE_FILE)
 
-        prev_reboot_cause = (reboot_cause, description)
-        return prev_reboot_cause
-
-
+        return reboot_cause
 
     @property
     def _get_presence_bitmap(self):
