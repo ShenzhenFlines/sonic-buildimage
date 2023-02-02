@@ -879,7 +879,7 @@ static int clx_driver_clx8000_set_eth_tx_disable_status(void *xcvr, unsigned int
 
 static int check_dsfp_port(unsigned int eth_index)
 {
-    if (eth_index < 48) {
+    if (eth_index < QSFP_START_PORT) {
         return true;
     }
     else {
@@ -911,6 +911,34 @@ static ssize_t get_qsfp_present(struct clounix_priv_data *sfp,
     data = fpga_reg_read(sfp, QSFP_STATUS_ADDRESS_BASE);
     XCVR_DBG(" reg: %x, data: %x\r\n", QSFP_STATUS_ADDRESS_BASE, data);
     GET_BIT((data >> QSFP_STATUS_PRESENT_OFFSET), (eth_index - QSFP_START_PORT), val);
+
+    return sprintf(buf, "%d\n", val);
+}
+
+static ssize_t get_dsfp_interrupt(struct clounix_priv_data *sfp,
+                unsigned int eth_index, char *buf, size_t count)
+{
+    uint32_t data = 0, val = 0, reg;
+
+    GET_DSFP_IRQ_STATUS_ADDRESS(eth_index, reg);
+    data = fpga_reg_read(sfp, reg);
+    XCVR_DBG("eth_index:%d, reg: %x, data: %x\r\n",eth_index, reg, data);
+    if(eth_index >= 30)
+        GET_BIT(data, (eth_index - 30), val);
+    else
+        GET_BIT(data, eth_index, val);
+
+    return sprintf(buf, "%d\n", val);
+}
+
+static ssize_t get_qsfp_interrupt(struct clounix_priv_data *sfp,
+                unsigned int eth_index, char *buf, size_t count)
+{
+    uint32_t data = 0, val = 0;
+
+    data = fpga_reg_read(sfp, QSFP_STATUS_ADDRESS_BASE);
+    XCVR_DBG(" reg: %x, data: %x\r\n", QSFP_STATUS_ADDRESS_BASE, data);
+    GET_BIT((data >> QSFP_STATUS_IRQ_OFFSET), (eth_index - QSFP_START_PORT), val);
 
     return sprintf(buf, "%d\n", val);
 }
@@ -1176,8 +1204,14 @@ static int clx_driver_clx8000_set_eth_low_power_mode_status(void *xcvr, unsigned
  */
 static ssize_t clx_driver_clx8000_get_eth_interrupt_status(void *xcvr, unsigned int eth_index, char *buf, size_t count)
 {
-    /* it is not supported */
-    return -ENOSYS;
+    struct clounix_priv_data *sfp = &(((struct xcvr_driver_clx8000 *)xcvr)->dev);
+
+    if (check_dsfp_port(eth_index)) {
+        return get_dsfp_interrupt(sfp, eth_index, buf, count);
+    }
+    else {
+        return get_qsfp_interrupt(sfp, eth_index, buf, count);
+    }
 }
 
 /*
