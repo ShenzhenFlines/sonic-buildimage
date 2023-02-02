@@ -11,6 +11,7 @@
 try:
     from sonic_platform_base.fan_drawer_base import FanDrawerBase
     from sonic_platform.fan import Fan
+    from .helper import APIHelper
 except ImportError as e:
     raise ImportError(str(e) + "- required module not found")
 
@@ -18,10 +19,12 @@ except ImportError as e:
 class FanDrawer(FanDrawerBase):
 
     def __init__(self, index,fandrawer_conf):
+        self.__api_helper = APIHelper()
         self.__conf = fandrawer_conf
         self.__num_of_fans = len(self.__conf[index]['fans'])
         self.__index = index
         self._fan_list = []
+        self.__attr_led_path_prefix = '/sys/switch/sysled/'
         FanDrawerBase.__init__(self)
 
         # Initialize FAN_DRAWER FAN
@@ -41,7 +44,21 @@ class FanDrawer(FanDrawerBase):
         Returns:
             bool: True if status LED state is set successfully, False if not
         """
-        return self._fan_list[0].set_status_led(color)
+        ret_val = False
+        led_value = 0
+        if color == "green":
+            led_value = 1
+        elif color == "red":
+            led_value = 2
+        elif color == "yellow":
+            led_value = 3
+        elif color == "off":
+            led_value = 0
+        else:
+            return False
+        ret_val = self.__api_helper.write_txt_file(self.__attr_led_path_prefix + 'fan_led_status',led_value)
+
+        return ret_val
 
     def get_status_led(self):
         """
@@ -49,7 +66,18 @@ class FanDrawer(FanDrawerBase):
         Returns:
             A string, one of the predefined STATUS_LED_COLOR_* strings above
         """
-        return self._fan_list[0].get_status_led()
+        color = "off"
+        attr_rv = self.__api_helper.read_one_line_file(self.__attr_led_path_prefix + 'fan_led_status')
+        if (int(attr_rv, 16) == 0x1):
+            color = "green"
+        elif(int(attr_rv, 16) == 0x2):
+            color = "red"
+        elif(int(attr_rv, 16) == 0x3):
+            color = "yellow"
+        else:
+            color = "off"
+
+        return color
 
     def get_name(self):
         """
