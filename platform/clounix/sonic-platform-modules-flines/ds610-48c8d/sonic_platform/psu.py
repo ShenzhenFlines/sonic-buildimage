@@ -24,6 +24,7 @@ class Psu(PsuBase):
         self.__conf = psu_conf
         self.__api_helper = APIHelper()
         self.__attr_path_prefix = '/sys/switch/psu/psu{}/'.format(self.__index + 1)
+        self.__attr_led_path_prefix = '/sys/switch/sysled/'
 
         self._fan_list = []
         self._thermal_list = []
@@ -208,7 +209,16 @@ class Psu(PsuBase):
         Returns:
             bool: True if status LED state is set successfully, False if not
         """
-        return self._fan_list[0].set_status_led(color)
+        ret_val = False
+        led_value = 0
+        if color == self.STATUS_LED_COLOR_GREEN:
+            led_value = 1
+        elif color == self.STATUS_LED_COLOR_RED:
+            led_value = 2
+        else:
+            return False
+        ret_val = self.__api_helper.write_txt_file(self.__attr_led_path_prefix + 'psu_led_status',led_value) 
+        return ret_val
 
     ## SYSLED status
     STATUS_LED_COLOR_OFF = "off"
@@ -260,8 +270,10 @@ class Psu(PsuBase):
         attr_rv = self.__api_helper.read_one_line_file(self.__attr_path_prefix + 'max_output_vol')
         if (attr_rv != None):
             voltage_high_threshold = float(attr_rv)
+        else:
+            voltage_high_threshold = (12000*1.05)
 
-        return voltage_high_threshold
+        return voltage_high_threshold/1000
 
     def get_voltage_low_threshold(self):
         """
@@ -276,8 +288,9 @@ class Psu(PsuBase):
         attr_rv = self.__api_helper.read_one_line_file(self.__attr_path_prefix + 'min_output_vol')
         if (attr_rv != None):
             voltage_low_threshold = float(attr_rv)
-
-        return voltage_low_threshold
+        else:
+            voltage_low_threshold = (12000*0.95)
+        return voltage_low_threshold/1000
 
     def get_maximum_supplied_power(self):
         """
