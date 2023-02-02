@@ -56,7 +56,7 @@ class Component(ComponentBase):
         if attr_rv != None:
             firmware_version = attr_rv
         else:
-            if self.get_name == 'BIOS':
+            if self.get_name() == 'BIOS':
                 ret,bios_ver = self.__api_helper.run_command(BIOS_QUERY_VERSION_COMMAND)
                 if ret:
                     if bios_ver:
@@ -73,10 +73,10 @@ class Component(ComponentBase):
         Returns:
             A boolean, True if install was successful, False if not
         """
-        if self.get_name == 'BIOS':
+        if self.get_name() == 'BIOS':
             cmd = "/usr/local/bin/install_firmware.sh bios "+ image_path
         else:
-            print(self.get_name + 'frimware upgrade did not implement')
+            print(self.get_name() + 'frimware upgrade did not implement')
 
         os.system(cmd)
         return True
