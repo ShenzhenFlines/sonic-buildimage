@@ -325,19 +325,19 @@ class Chassis(ChassisBase):
 
         if sw_reboot_cause != 'Unknown':
             reboot_cause = (self.REBOOT_CAUSE_NON_HARDWARE, sw_reboot_cause)
-        #return prev_reboot_cause
-        #if hw_reboot_cause != 'Unknown':
-            #reboot_cause = self.REBOOT_CAUSE_HARDWARE_OTHER
-
-        #software reboot cause
-        #sw_reboot_cause = self.__api_helper.read_one_line_file(REBOOT_CAUSE_FILE) or "Unknown"
-        #description = sw_reboot_cause
 
         #thermal policy reboot cause
         if os.path.isfile(THERMAL_OVERLOAD_POSITION_FILE):
             thermal_overload_pos = self.__api_helper.read_one_line_file(THERMAL_OVERLOAD_POSITION_FILE)
             if thermal_overload_pos is not "None":
-                reboot_cause = (self.REBOOT_CAUSE_HARDWARE_OTHER, thermal_overload_pos)
+                str = thermal_overload_pos
+                if str.find('CPU') >= 0:
+                    reboot_cause = (self.REBOOT_CAUSE_THERMAL_OVERLOAD_CPU, 'Thermal Overload: CPU')
+                elif str.find('ASIC') >= 0:
+                    reboot_cause = (self.REBOOT_CAUSE_THERMAL_OVERLOAD_ASIC, 'Thermal Overload: ASIC')
+                else:
+                    reboot_cause = (self.REBOOT_CAUSE_THERMAL_OVERLOAD_OTHER, thermal_overload_pos)
+
                 os.remove(THERMAL_OVERLOAD_POSITION_FILE)
 
         if os.path.isfile(ADDITIONAL_FAULT_CAUSE_FILE):

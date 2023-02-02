@@ -120,7 +120,7 @@
                 "position": "CPU"
             },
             {
-                "name": "TMP75C / temp 0x48",
+                "name": "TMP75C / ASIC 0x48",
                 "position": "fpga i2c temp"
             },
             {
