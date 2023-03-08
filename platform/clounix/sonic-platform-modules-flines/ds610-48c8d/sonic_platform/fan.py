@@ -181,11 +181,16 @@ class Fan(FanBase):
             return int(self.__api_helper.read_one_line_file(self.__attr_path_prefix + 'fan_speed'))
         else:
             attr_rv = self.__api_helper.read_one_line_file(self.__attr_path_prefix + 'motor0/ratio')
-        
+            speed_max = self.__api_helper.read_one_line_file(self.__attr_path_prefix + 'motor0/speed_max')
+            if (speed_max != None):
+                speed_max = int(speed_max)
+                if (speed_max < 0):
+                    return speed_max
+                
         if (attr_rv != None):
             attr_rv = int(attr_rv) 
             if (attr_rv >= 0):
-                speed = (attr_rv*210)
+                speed = (attr_rv*(speed_max/100))
        
         return speed
 

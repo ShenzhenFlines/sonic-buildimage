@@ -426,7 +426,7 @@ static ssize_t clx_driver_clx8000_get_fan_motor_speed_tolerance(void *fan, unsig
                    char *buf, size_t count)
 {
     /* to be update: is it not supported from hardware */
-    return sprintf(buf, "2100");
+    return sprintf(buf, "2780");
 }
 
 /*
@@ -469,7 +469,7 @@ static ssize_t clx_driver_clx8000_get_fan_motor_speed_target(void *fan, unsigned
 static ssize_t clx_driver_clx8000_get_fan_motor_speed_max(void *fan, unsigned int fan_index, unsigned int motor_index,
                    char *buf, size_t count)
 {
-    return sprintf(buf, "21000");
+    return sprintf(buf, "27800");
 }
 
 /*
@@ -487,7 +487,7 @@ static ssize_t clx_driver_clx8000_get_fan_motor_speed_max(void *fan, unsigned in
 static ssize_t clx_driver_clx8000_get_fan_motor_speed_min(void *fan, unsigned int fan_index, unsigned int motor_index,
                    char *buf, size_t count)
 {
-    return sprintf(buf, "2100");
+    return sprintf(buf, "2780");
 }
 
 /*
